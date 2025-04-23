@@ -1,6 +1,5 @@
 import React from 'react';
-import { StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions } from 'react-native';
-import { useRouter } from 'expo-router';
+import { StyleSheet, FlatList, TouchableOpacity, Image, View, Dimensions } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ArtCategory } from '@/app/models/types';
@@ -9,46 +8,37 @@ interface CategoryListProps {
   categories: ArtCategory[];
 }
 
-const { width } = Dimensions.get('window');
-const ITEM_WIDTH = width / 2.5;
-
 export function CategoryList({ categories }: CategoryListProps) {
-  const router = useRouter();
-
-  const handleCategoryPress = (categoryId: string) => {
-    router.push(`/category/${categoryId}`);
-  };
+  const renderItem = ({ item }: { item: ArtCategory }) => (
+    <TouchableOpacity style={styles.categoryItem}>
+      <Image source={{ uri: item.imageUrl }} style={styles.categoryImage} />
+      <View style={styles.categoryOverlay}>
+        <ThemedText style={styles.categoryName}>{item.name}</ThemedText>
+        <ThemedText style={styles.categoryCount}>{item.artworkCount} работ</ThemedText>
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText style={styles.sectionTitle}>Категории</ThemedText>
-      
-      <ScrollView 
-        horizontal 
+      <FlatList
+        horizontal
+        data={categories}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {categories.map((category) => (
-          <TouchableOpacity 
-            key={category.id} 
-            style={styles.categoryItem}
-            onPress={() => handleCategoryPress(category.id)}
-          >
-            <Image source={{ uri: category.imageUrl }} style={styles.categoryImage} />
-            <ThemedView style={styles.categoryInfo}>
-              <ThemedText style={styles.categoryName}>{category.name}</ThemedText>
-              <ThemedText style={styles.categoryCount}>{category.artworkCount} работ</ThemedText>
-            </ThemedView>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+        contentContainerStyle={styles.listContent}
+      />
     </ThemedView>
   );
 }
 
+const { width } = Dimensions.get('window');
+const ITEM_WIDTH = width * 0.7;
+
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 16,
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 20,
@@ -56,36 +46,35 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginBottom: 12,
   },
-  scrollContent: {
-    paddingHorizontal: 12,
+  listContent: {
+    paddingHorizontal: 16,
   },
   categoryItem: {
     width: ITEM_WIDTH,
-    height: ITEM_WIDTH * 0.75,
-    marginHorizontal: 4,
+    height: 120,
     borderRadius: 12,
+    marginRight: 12,
     overflow: 'hidden',
   },
   categoryImage: {
     width: '100%',
     height: '100%',
-    position: 'absolute',
+    resizeMode: 'cover',
   },
-  categoryInfo: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+  categoryOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'flex-end',
     padding: 12,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
   categoryName: {
-    color: '#fff',
+    fontSize: 18,
     fontWeight: 'bold',
-    fontSize: 16,
+    color: '#fff',
   },
   categoryCount: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 12,
+    fontSize: 14,
+    color: '#fff',
+    opacity: 0.8,
   },
 }); 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, ScrollView, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -114,34 +114,37 @@ const USER_ARTWORKS: Artwork[] = [
 
 export default function ProfileScreen() {
   return (
-    <ScrollView style={styles.container}>
-      <ProfileHeader user={CURRENT_USER} isCurrentUser={true} />
-      
-      <ThemedView style={styles.tabContainer}>
-        <TouchableOpacity style={[styles.tab, styles.activeTab]}>
-          <FontAwesome name="th" size={18} color="#0a7ea4" />
-          <ThemedText style={styles.activeTabText}>Работы</ThemedText>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tab}>
-          <FontAwesome name="bookmark" size={18} color="#888" />
-          <ThemedText style={styles.tabText}>Сохраненные</ThemedText>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tab}>
-          <FontAwesome name="heart" size={18} color="#888" />
-          <ThemedText style={styles.tabText}>Понравившиеся</ThemedText>
-        </TouchableOpacity>
-      </ThemedView>
-      
-      <View style={styles.galleryContainer}>
-        <GalleryGrid artworks={USER_ARTWORKS} compact={true} />
+    <ThemedView style={styles.container}>
+      <View style={styles.headerSection}>
+        <ProfileHeader user={CURRENT_USER} isCurrentUser={true} />
+        
+        <ThemedView style={styles.tabContainer}>
+          <TouchableOpacity style={[styles.tab, styles.activeTab]}>
+            <FontAwesome name="th" size={18} color="#0a7ea4" />
+            <ThemedText style={styles.activeTabText}>Работы</ThemedText>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.tab}>
+            <FontAwesome name="bookmark" size={18} color="#888" />
+            <ThemedText style={styles.tabText}>Сохраненные</ThemedText>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.tab}>
+            <FontAwesome name="heart" size={18} color="#888" />
+            <ThemedText style={styles.tabText}>Понравившиеся</ThemedText>
+          </TouchableOpacity>
+        </ThemedView>
       </View>
-    </ScrollView>
+      
+      <GalleryGrid artworks={USER_ARTWORKS} compact={true} />
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  headerSection: {
+    paddingBottom: 8,
   },
   tabContainer: {
     flexDirection: 'row',

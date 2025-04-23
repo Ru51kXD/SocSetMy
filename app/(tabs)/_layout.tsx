@@ -37,21 +37,21 @@ export default function TabLayout() {
         name="upload"
         options={{
           title: 'Загрузить',
-          tabBarIcon: ({ color }) => <TabBarIcon name="plus-circle" color={color} />,
+          tabBarIcon: ({ color }) => <TabBarIcon name="cloud-upload" color={color} />,
         }}
       />
       <Tabs.Screen
         name="gallery"
         options={{
           title: 'Галерея',
-          tabBarIcon: ({ color }) => <TabBarIcon name="image" color={color} />,
+          tabBarIcon: ({ color }) => <TabBarIcon name="picture-o" color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Профиль',
-          tabBarIcon: ({ color }) => <TabBarIcon name="user" color={color} />,
+          tabBarIcon: ({ color }) => <TabBarIcon name="user-circle" color={color} />,
         }}
       />
     </Tabs>

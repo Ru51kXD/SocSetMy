@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, ScrollView, TouchableOpacity, Image, View } from 'react-native';
+import { StyleSheet, FlatList, TouchableOpacity, Image, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -16,40 +16,43 @@ export function FeaturedArtists({ artists }: FeaturedArtistsProps) {
     router.push(`/profile/${artistId}`);
   };
 
+  const renderArtistItem = ({ item }: { item: User }) => (
+    <TouchableOpacity 
+      style={styles.artistItem}
+      onPress={() => handleArtistPress(item.id)}
+    >
+      <View style={styles.avatarContainer}>
+        <Image source={{ uri: item.avatar }} style={styles.avatar} />
+        {item.isVerified && (
+          <View style={styles.verifiedBadge} />
+        )}
+      </View>
+      <ThemedText style={styles.artistName} numberOfLines={1}>{item.displayName}</ThemedText>
+      <ThemedText style={styles.artistStats}>{item.followers} подписчиков</ThemedText>
+      
+      <View style={styles.tagContainer}>
+        {item.artStyle && item.artStyle.split(',').slice(0, 1).map((style, index) => (
+          <View key={index} style={styles.tag}>
+            <ThemedText style={styles.tagText}>{style.trim()}</ThemedText>
+          </View>
+        ))}
+      </View>
+    </TouchableOpacity>
+  );
+
   return (
     <ThemedView style={styles.container}>
       <ThemedText style={styles.sectionTitle}>Популярные художники</ThemedText>
       
-      <ScrollView 
-        horizontal 
+      <FlatList
+        horizontal
+        data={artists}
+        renderItem={renderArtistItem}
+        keyExtractor={(item) => item.id}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
-      >
-        {artists.map((artist) => (
-          <TouchableOpacity 
-            key={artist.id} 
-            style={styles.artistItem}
-            onPress={() => handleArtistPress(artist.id)}
-          >
-            <View style={styles.avatarContainer}>
-              <Image source={{ uri: artist.avatar }} style={styles.avatar} />
-              {artist.isVerified && (
-                <View style={styles.verifiedBadge} />
-              )}
-            </View>
-            <ThemedText style={styles.artistName} numberOfLines={1}>{artist.displayName}</ThemedText>
-            <ThemedText style={styles.artistStats}>{artist.followers} подписчиков</ThemedText>
-            
-            <View style={styles.tagContainer}>
-              {artist.artStyles.slice(0, 1).map((style, index) => (
-                <View key={index} style={styles.tag}>
-                  <ThemedText style={styles.tagText}>{style}</ThemedText>
-                </View>
-              ))}
-            </View>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+        decelerationRate="fast"
+      />
     </ThemedView>
   );
 }
@@ -66,11 +69,14 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 12,
+    paddingBottom: 4,
   },
   artistItem: {
     width: 120,
     alignItems: 'center',
     marginHorizontal: 8,
+    padding: 8,
+    borderRadius: 12,
   },
   avatarContainer: {
     position: 'relative',
@@ -80,6 +86,8 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
+    borderWidth: 2,
+    borderColor: '#f0f0f0',
   },
   verifiedBadge: {
     position: 'absolute',

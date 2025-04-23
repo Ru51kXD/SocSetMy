@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, TextInput, TouchableOpacity, FlatList, Image } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { StyleSheet, View, TextInput, TouchableOpacity, FlatList, Image, ActivityIndicator } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -124,11 +124,27 @@ const MOCK_ARTWORKS: Artwork[] = [
   }
 ];
 
+// Моковые популярные теги
+const POPULAR_TAGS = ['живопись', 'акварель', 'скетчинг', 'портрет', 'пейзаж', 'диджитал'];
+
 type SearchTab = 'artworks' | 'artists' | 'tags';
 
 export default function ExploreScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<SearchTab>('artworks');
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Имитация поиска с загрузкой
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query);
+    
+    if (query.trim().length > 0) {
+      setIsLoading(true);
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 800); // Имитация задержки сети
+    }
+  }, []);
   
   const renderArtistItem = ({ item }: { item: User }) => (
     <TouchableOpacity style={styles.artistCard}>
@@ -166,28 +182,65 @@ export default function ExploreScreen() {
     </TouchableOpacity>
   );
 
-  const renderContent = () => {
-    if (searchQuery.trim() === '') {
+  const renderPopularTagItem = ({ item }: { item: string }) => (
+    <TouchableOpacity style={styles.tag}>
+      <ThemedText style={styles.tagLabel}>#{item}</ThemedText>
+    </TouchableOpacity>
+  );
+
+  const renderCategoryItem = ({ item }: { item: ArtCategory }) => (
+    <TouchableOpacity 
+      style={styles.categoryItem}
+      onPress={() => {/* Навигация на страницу категории */}}
+    >
+      <Image source={{ uri: item.imageUrl }} style={styles.categoryImage} />
+      <ThemedView style={styles.categoryInfo}>
+        <ThemedText style={styles.categoryName}>{item.name}</ThemedText>
+        <ThemedText style={styles.categoryCount}>{item.artworkCount} работ</ThemedText>
+      </ThemedView>
+    </TouchableOpacity>
+  );
+
+  const renderEmptyContent = () => (
+    <>
+      <FlatList
+        horizontal
+        data={MOCK_CATEGORIES}
+        renderItem={renderCategoryItem}
+        keyExtractor={(item) => item.id}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.horizontalListContent}
+        style={styles.horizontalList}
+      />
+      
+      <ThemedView style={styles.section}>
+        <ThemedText style={styles.sectionTitle}>Популярные теги</ThemedText>
+        <FlatList
+          data={POPULAR_TAGS}
+          renderItem={renderPopularTagItem}
+          keyExtractor={(item) => item}
+          numColumns={3}
+          contentContainerStyle={styles.tagsGridContent}
+          scrollEnabled={false}
+        />
+      </ThemedView>
+      
+      <ThemedView style={styles.section}>
+        <ThemedText style={styles.sectionTitle}>Рекомендуемые работы</ThemedText>
+        {MOCK_ARTWORKS.map((artwork) => (
+          <ArtworkCard key={artwork.id} artwork={artwork} compact={false} />
+        ))}
+      </ThemedView>
+    </>
+  );
+
+  const renderSearchResults = () => {
+    if (isLoading) {
       return (
-        <>
-          <CategoryList categories={MOCK_CATEGORIES} />
-          <ThemedView style={styles.section}>
-            <ThemedText style={styles.sectionTitle}>Популярные теги</ThemedText>
-            <View style={styles.tagsContainer}>
-              {['живопись', 'акварель', 'скетчинг', 'портрет', 'пейзаж', 'диджитал'].map((tag, index) => (
-                <TouchableOpacity key={index} style={styles.tag}>
-                  <ThemedText style={styles.tagLabel}>#{tag}</ThemedText>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </ThemedView>
-          <ThemedView style={styles.section}>
-            <ThemedText style={styles.sectionTitle}>Рекомендуемые работы</ThemedText>
-            {MOCK_ARTWORKS.map((artwork) => (
-              <ArtworkCard key={artwork.id} artwork={artwork} compact={false} />
-            ))}
-          </ThemedView>
-        </>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0a7ea4" />
+          <ThemedText style={styles.loadingText}>Поиск...</ThemedText>
+        </View>
       );
     }
 
@@ -216,7 +269,7 @@ export default function ExploreScreen() {
     if (activeTab === 'tags') {
       return (
         <FlatList
-          data={['пейзаж', 'портрет', 'скетч', 'масло', 'акварель', 'диджитал']}
+          data={POPULAR_TAGS}
           renderItem={renderTagItem}
           keyExtractor={(item) => item}
           contentContainerStyle={styles.searchResults}
@@ -234,10 +287,11 @@ export default function ExploreScreen() {
             style={styles.searchInput}
             placeholder="Поиск художников, работ, тегов..."
             value={searchQuery}
-            onChangeText={setSearchQuery}
+            onChangeText={handleSearch}
+            clearButtonMode="while-editing"
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
+            <TouchableOpacity onPress={() => handleSearch('')}>
               <FontAwesome name="times-circle" size={16} color="#888" />
             </TouchableOpacity>
           )}
@@ -273,7 +327,16 @@ export default function ExploreScreen() {
         )}
       </ThemedView>
       
-      {renderContent()}
+      {searchQuery.trim() === '' ? (
+        <FlatList
+          data={[]} // Пустой массив, так как мы используем только ListHeaderComponent
+          renderItem={() => null}
+          ListHeaderComponent={renderEmptyContent}
+          contentContainerStyle={styles.contentContainer}
+        />
+      ) : (
+        renderSearchResults()
+      )}
     </ThemedView>
   );
 }
@@ -281,6 +344,9 @@ export default function ExploreScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  contentContainer: {
+    paddingBottom: 20,
   },
   header: {
     padding: 16,
@@ -333,6 +399,49 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 16,
   },
+  horizontalList: {
+    marginTop: 16,
+  },
+  horizontalListContent: {
+    paddingHorizontal: 16,
+  },
+  categoryItem: {
+    width: 150,
+    height: 120,
+    marginRight: 8,
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  categoryImage: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+  },
+  categoryInfo: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+  },
+  categoryName: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  categoryCount: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 12,
+  },
+  tagsGridContent: {
+    marginBottom: 10,
+  },
   tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -344,6 +453,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginRight: 8,
     marginBottom: 8,
+    flex: 1,
+    minWidth: '30%',
+    alignItems: 'center',
   },
   tagLabel: {
     color: '#0a7ea4',
@@ -363,6 +475,8 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
+    borderWidth: 1,
+    borderColor: '#eee',
   },
   artistInfo: {
     flex: 1,
@@ -436,5 +550,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#888',
     marginLeft: 'auto',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    marginTop: 50,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#888',
   },
 });
