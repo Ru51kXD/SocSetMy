@@ -1,21 +1,25 @@
 {
   "expo": {
-    "name": "artist-social-app",
-    "slug": "artist-social-app",
+    "name": "АртСеть",
+    "slug": "art-social-network",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "artnetwork",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Разрешите доступ к галерее, чтобы вы могли загружать свои работы"
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": ["android.permission.READ_EXTERNAL_STORAGE", "android.permission.WRITE_EXTERNAL_STORAGE"]
     },
     "web": {
       "bundler": "metro",
@@ -31,6 +35,13 @@
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "АртСеть использует вашу камеру для загрузки ваших работ.",
+          "cameraPermission": "АртСеть использует вашу фотогалерею для загрузки ваших работ."
         }
       ]
     ],
