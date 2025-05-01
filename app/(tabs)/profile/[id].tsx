@@ -10,6 +10,7 @@ import { GalleryGrid } from '@/app/components/gallery/GalleryGrid';
 import { ContactArtistModal } from '@/app/components/common/ContactArtistModal';
 import { User, Artwork } from '@/app/models/types';
 import { MOCK_ARTWORKS } from '@/app/data/artworks';
+import { useMessages } from '@/app/context/MessageContext';
 
 // Моковые данные художников
 const MOCK_ARTISTS: User[] = [
@@ -309,6 +310,7 @@ export default function ArtistProfileScreen() {
   const [isContactModalVisible, setIsContactModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const { setActiveChat } = useMessages();
   
   useEffect(() => {
     // Устанавливаем флаг загрузки
@@ -392,7 +394,11 @@ export default function ArtistProfileScreen() {
   };
 
   const handleMessage = () => {
-    setIsContactModalVisible(true);
+    // Вместо открытия модального окна сразу перенаправляем в чат
+    if (artist) {
+      setActiveChat?.(artist.id);
+      router.push('/(tabs)/messages');
+    }
   };
   
   const renderPortfolioTab = () => (

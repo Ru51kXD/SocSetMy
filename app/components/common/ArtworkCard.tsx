@@ -20,7 +20,7 @@ const cardWidth = width / 2 - 24; // Две карточки в ряду с уч
 
 export function ArtworkCard({ artwork, compact = false, onContactRequest }: ArtworkCardProps) {
   const router = useRouter();
-  const { threads, shareArtwork } = useMessages();
+  const { threads, shareArtwork, setActiveChat, hasThreadWithArtist } = useMessages();
   const [isShareModalVisible, setIsShareModalVisible] = useState(false);
 
   // Получаем уникальных художников из существующих чатов
@@ -41,10 +41,26 @@ export function ArtworkCard({ artwork, compact = false, onContactRequest }: Artw
     router.push(`/profile/${artwork.artistId}`);
   };
 
-  const handleContactPress = (e: any) => {
-    e.stopPropagation();
+  const handleContactRequest = () => {
     if (onContactRequest) {
+      // Если передан внешний обработчик, используем его
       onContactRequest(artwork);
+      return;
+    }
+    
+    // Преобразуем ID художника в строку для правильного сравнения
+    const artistIdStr = String(artwork.artistId);
+    
+    // Проверяем, существует ли уже чат с этим художником
+    if (hasThreadWithArtist(artistIdStr)) {
+      // Если чат существует, просто активируем его и переходим к нему
+      setActiveChat?.(artistIdStr);
+      router.push('/(tabs)/messages');
+    } else {
+      // Только если чата ещё нет, создаём новый
+      shareArtwork(artistIdStr, artwork);
+      setActiveChat?.(artistIdStr);
+      router.push('/(tabs)/messages');
     }
   };
 
@@ -53,21 +69,22 @@ export function ArtworkCard({ artwork, compact = false, onContactRequest }: Artw
     setIsShareModalVisible(true);
   };
 
-  const handleShareToArtist = (artist: User) => {
-    shareArtwork(artist.id, artwork);
+  const handleShareArtwork = (artistId: string) => {
+    // Отправляем сообщение с произведением искусства
+    shareArtwork(artistId, artwork);
+    
+    // Закрываем модальное окно
     setIsShareModalVisible(false);
     
-    // Показываем уведомление пользователю
-    alert(`Работа "${artwork.title}" отправлена ${artist.displayName}`);
-    
-    // Переходим в чат с этим художником
-    router.push(`/chat/${artist.id}`);
+    // Перенаправляем на экран сообщений с открытым чатом
+    setActiveChat?.(artistId);
+    router.push('/(tabs)/messages');
   };
 
   const renderArtistItem = ({ item }: { item: User }) => (
     <TouchableOpacity 
       style={styles.artistItem} 
-      onPress={() => handleShareToArtist(item)}
+      onPress={() => handleShareArtwork(item.id)}
       activeOpacity={0.7}
     >
       <Image source={{ uri: item.avatar }} style={styles.artistAvatar} />
@@ -118,7 +135,7 @@ export function ArtworkCard({ artwork, compact = false, onContactRequest }: Artw
             </TouchableOpacity>
             
             {artwork.isForSale && onContactRequest && (
-              <TouchableOpacity style={styles.contactButton} onPress={handleContactPress}>
+              <TouchableOpacity style={styles.contactButton} onPress={handleContactRequest}>
                 <FontAwesome name="envelope" size={12} color="#fff" />
                 <ThemedText style={styles.contactText}>Связаться</ThemedText>
               </TouchableOpacity>

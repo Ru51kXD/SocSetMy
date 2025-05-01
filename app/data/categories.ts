@@ -102,4 +102,9 @@ export const MOCK_CATEGORIES: ExtendedArtCategory[] = [
     imageUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2',
     artworkCount: 23
   }
-]; 
+];
+
+// Экспорт по умолчанию для совместимости с роутером
+export default {
+  MOCK_CATEGORIES
+}; 

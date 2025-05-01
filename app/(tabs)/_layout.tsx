@@ -2,7 +2,7 @@ import { Tabs } from 'expo-router';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, View, Dimensions } from 'react-native';
+import { StyleSheet, View, Dimensions, Platform } from 'react-native';
 
 function TabBarIcon(props: {
   name: React.ComponentProps<typeof Ionicons>['name'];
@@ -29,27 +29,41 @@ export default function TabLayout() {
   const activeColor = '#0a7ea4'; // Фиксированный основной цвет для единообразия
   const inactiveColor = colorScheme === 'dark' ? '#9BA1A6' : '#687076';
 
+  // Определяем максимальное количество табов на основе ширины экрана
+  const MAX_TABS = 5; // Максимальное количество табов на экране
+
   return (
     <Tabs
-      screenOptions={{
+      backBehavior='initialRoute'
+      screenOptions={({ route }) => ({
         tabBarActiveTintColor: activeColor,
         tabBarInactiveTintColor: inactiveColor,
-        headerShown: true,
+        headerShown: false,
         tabBarStyle: styles.tabBar,
         tabBarLabelStyle: styles.tabBarLabel,
         tabBarIconStyle: styles.tabBarIcon,
         tabBarHideOnKeyboard: true,
+        tabBarShowLabel: true,
+        tabBarItemStyle: {
+          paddingVertical: 2,
+          height: 50,
+          width: width / MAX_TABS, // Равномерное распределение ширины
+          justifyContent: 'center',
+          alignItems: 'center',
+          marginHorizontal: 0,
+        },
         tabBarBackground: () => (
           <View style={[
             styles.tabBarBackground,
             {backgroundColor: colorScheme === 'dark' ? '#1E2124' : '#FFFFFF'}
           ]} />
         ),
-      }}>
+      })}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Лента',
+          headerShown: false,
           tabBarIcon: ({ color, focused }) => <TabBarIcon name="home" color={color} focused={focused} />,
         }}
       />
@@ -57,20 +71,15 @@ export default function TabLayout() {
         name="explore"
         options={{
           title: 'Поиск',
+          headerShown: false,
           tabBarIcon: ({ color, focused }) => <TabBarIcon name="search" color={color} focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="gallery/index"
-        options={{
-          title: 'Галерея',
-          tabBarIcon: ({ color, focused }) => <TabBarIcon name="images-outline" color={color} focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="upload/index"
         options={{
           title: 'Загрузить',
+          headerShown: false,
           tabBarIcon: ({ color, focused }) => 
             <View style={focused ? styles.uploadButtonActive : styles.uploadButton}>
               <Ionicons 
@@ -89,6 +98,7 @@ export default function TabLayout() {
         name="messages"
         options={{
           title: 'Сообщения',
+          headerShown: false,
           tabBarIcon: ({ color, focused }) => <TabBarIcon name="chatbubble" color={color} focused={focused} />,
         }}
       />
@@ -96,6 +106,7 @@ export default function TabLayout() {
         name="profile/index"
         options={{
           title: 'Профиль',
+          headerShown: false,
           tabBarIcon: ({ color, focused }) => <TabBarIcon name="person" color={color} focused={focused} />,
         }}
       />
@@ -119,6 +130,18 @@ export default function TabLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="chat/[id]"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="gallery/index"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }
@@ -127,7 +150,7 @@ const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   tabBar: {
-    height: 65,
+    height: 60,
     elevation: 12,
     shadowColor: "#000",
     shadowOffset: {
@@ -138,8 +161,11 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     borderTopWidth: 0,
     position: 'relative',
-    paddingTop: 8,
-    paddingHorizontal: 5,
+    paddingTop: 5,
+    paddingBottom: 8,
+    paddingHorizontal: 0,
+    justifyContent: 'space-between',
+    flexDirection: 'row',
   },
   tabBarBackground: {
     position: 'absolute',
@@ -151,10 +177,11 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
   },
   tabBarLabel: {
-    fontSize: 11,
+    fontSize: 9,
     fontWeight: '600',
-    marginTop: 2,
-    marginBottom: 5,
+    marginTop: 1,
+    marginBottom: 3,
+    textAlign: 'center',
   },
   tabBarIcon: {
     marginTop: 0,
@@ -162,7 +189,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 50,
+    width: 40,
     height: 30,
     borderRadius: 15,
     marginBottom: -2,

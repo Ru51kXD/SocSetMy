@@ -124,4 +124,13 @@ export interface MessageStore {
   addMessage: (artistId: string, message: Partial<Message>) => void;
   markAsRead: (threadId: string) => void;
   getThreadByArtistId: (artistId: string) => MessageThread | undefined;
-} 
+  shareArtwork?: (artistId: string, artwork: Artwork) => void;
+  setActiveChat?: (artistId: string | null) => void;
+  activeChat: string | null;
+  hasThreadWithArtist: (artistId: string) => boolean;
+}
+
+// Экспорт по умолчанию для совместимости с роутером
+export default {
+  // Это пустой объект, который содержит ссылки на все типы
+}; 

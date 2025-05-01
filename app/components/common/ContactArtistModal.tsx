@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { 
   StyleSheet, 
   View, 
@@ -16,6 +16,8 @@ import { ThemedView } from '@/components/ThemedView';
 import { User, Artwork } from '@/app/models/types';
 import { useMessages } from '@/app/context/MessageContext';
 import { useRouter } from 'expo-router';
+import { Haptics } from '@/app/utils/Haptics';
+import MessageContext, { MessageStore } from '@/app/context/MessageContext';
 
 interface ContactArtistModalProps {
   visible: boolean;
@@ -26,8 +28,8 @@ interface ContactArtistModalProps {
 
 export function ContactArtistModal({ visible, artist, artwork, onClose }: ContactArtistModalProps) {
   const router = useRouter();
-  const { addMessage, shareArtwork } = useMessages();
-  const [message, setMessage] = useState('');
+  const { addMessage, shareArtwork, setActiveChat, hasThreadWithArtist } = useMessages();
+  const [messageData, setMessageData] = useState('');
   const [subject, setSubject] = useState('');
   const [isSending, setIsSending] = useState(false);
 
@@ -37,47 +39,54 @@ export function ContactArtistModal({ visible, artist, artwork, onClose }: Contac
       return;
     }
 
-    if (!message.trim()) {
+    if (!messageData.trim()) {
       Alert.alert('Ошибка', 'Пожалуйста, введите текст сообщения');
       return;
     }
 
+    // Преобразуем ID в строку для гарантированного сравнения
+    const artistIdStr = String(artist.id);
+    
     // Имитация отправки сообщения
     setIsSending(true);
     setTimeout(() => {
       setIsSending(false);
       
-      // Если есть произведение, отправляем его с сообщением
-      if (artwork) {
-        // Используем shareArtwork для отправки произведения искусства
-        shareArtwork(artist.id, artwork);
-        
-        // Также отправляем обычное сообщение с темой и текстом
-        addMessage(artist.id, {
-          content: message.trim(),
+      // Проверяем, существует ли уже чат с этим художником
+      if (hasThreadWithArtist(artistIdStr)) {
+        // Если чат уже существует, просто добавляем новое сообщение
+        addMessage(artistIdStr, {
+          content: messageData.trim(),
           senderId: 'current-user',
-          receiverId: artist.id,
+          receiverId: artistIdStr,
           subject: subject.trim()
         });
       } else {
-        // Отправляем обычное сообщение без прикрепленного произведения
-        addMessage(artist.id, {
-          content: message.trim(),
-          senderId: 'current-user',
-          receiverId: artist.id,
-          subject: subject.trim()
-        });
+        // Если чат ещё не существует
+        if (artwork) {
+          // Если есть произведение, отправляем его с помощью shareArtwork
+          shareArtwork(artistIdStr, artwork);
+        } else {
+          // Иначе просто создаём новый чат с сообщением
+          addMessage(artistIdStr, {
+            content: messageData.trim(),
+            senderId: 'current-user',
+            receiverId: artistIdStr,
+            subject: subject.trim()
+          });
+        }
       }
       
       // Очищаем поля ввода
-      setMessage('');
+      setMessageData('');
       setSubject('');
       
       // Закрываем модальное окно
       onClose();
       
-      // Переходим в чат с художником
-      router.push(`/chat/${artist.id}`);
+      // Устанавливаем активный чат и переходим к экрану сообщений
+      setActiveChat?.(artistIdStr);
+      router.push('/(tabs)/messages');
     }, 1000);
   };
 
@@ -132,8 +141,8 @@ export function ContactArtistModal({ visible, artist, artwork, onClose }: Contac
             <ThemedText style={styles.inputLabel}>Сообщение</ThemedText>
             <TextInput
               style={[styles.input, styles.messageInput]}
-              value={message}
-              onChangeText={setMessage}
+              value={messageData}
+              onChangeText={setMessageData}
               placeholder="Напишите ваше сообщение..."
               multiline
               numberOfLines={8}
@@ -141,9 +150,9 @@ export function ContactArtistModal({ visible, artist, artwork, onClose }: Contac
             />
             
             <TouchableOpacity 
-              style={[styles.sendButton, !message.trim() || !subject.trim() ? styles.disabledButton : null]}
+              style={[styles.sendButton, !messageData.trim() || !subject.trim() ? styles.disabledButton : null]}
               onPress={handleSend}
-              disabled={!message.trim() || !subject.trim() || isSending}
+              disabled={!messageData.trim() || !subject.trim() || isSending}
             >
               {isSending ? (
                 <ThemedText style={styles.sendButtonText}>Отправка...</ThemedText>

@@ -151,7 +151,7 @@ export default function HomeScreen() {
         <ThemedText style={styles.sectionTitle}>Категории</ThemedText>
       </ThemedView>
       
-      <CategoryList categories={MOCK_CATEGORIES} />
+      <CategoryList categories={MOCK_CATEGORIES} horizontal={true} />
       
       <ThemedView style={styles.section}>
         <ThemedText style={styles.sectionTitle}>Популярные художники</ThemedText>

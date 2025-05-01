@@ -34,6 +34,11 @@ export default function RootLayout() {
   // Проверка и применение обновлений
   useEffect(() => {
     async function checkForUpdates() {
+      if (__DEV__) {
+        // В режиме разработки пропускаем проверку обновлений
+        return;
+      }
+      
       try {
         const update = await Updates.checkForUpdateAsync();
         if (update.isAvailable) {
@@ -83,7 +88,7 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' }) {
       <View style={{ flex: 1 }}>
         <StatusBar barStyle="dark-content" />
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack>
+          <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="+not-found" />
           </Stack>

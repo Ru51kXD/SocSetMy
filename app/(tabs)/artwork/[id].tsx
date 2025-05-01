@@ -7,6 +7,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { Artwork, User } from '@/app/models/types';
 import { MOCK_ARTWORKS } from '@/app/data/artworks';
 import { ContactArtistModal } from '@/app/components/common/ContactArtistModal';
+import { useMessages } from '@/app/context/MessageContext';
 
 const { width } = Dimensions.get('window');
 
@@ -18,6 +19,7 @@ export default function ArtworkDetailScreen() {
   const [isSaved, setIsSaved] = useState(false);
   const [isContactModalVisible, setIsContactModalVisible] = useState(false);
   const [artist, setArtist] = useState<User | null>(null);
+  const { setActiveChat } = useMessages();
 
   useEffect(() => {
     // Находим работу по ID из параметров URL
@@ -56,7 +58,11 @@ export default function ArtworkDetailScreen() {
   };
 
   const handleContactArtist = () => {
-    setIsContactModalVisible(true);
+    if (artist) {
+      // Вместо открытия модального окна перенаправляем на экран сообщений с активным чатом
+      setActiveChat?.(artist.id);
+      router.push('/(tabs)/messages');
+    }
   };
 
   if (!artwork) {
@@ -154,8 +160,9 @@ export default function ArtworkDetailScreen() {
                 style={styles.contactButton}
                 onPress={handleContactArtist}
               >
-                <FontAwesome name="envelope" size={16} color="#fff" style={styles.buttonIcon} />
-                <ThemedText style={styles.contactButtonText}>Связаться с продавцом</ThemedText>
+                <ThemedText style={styles.contactButtonText}>
+                  Связаться с продавцом
+                </ThemedText>
               </TouchableOpacity>
             </View>
           )}
@@ -297,9 +304,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 14,
     borderRadius: 8,
-  },
-  buttonIcon: {
-    marginRight: 8,
   },
   contactButtonText: {
     color: '#fff',

@@ -7,7 +7,7 @@
     "icon": "./assets/images/icon.png",
     "scheme": "artnetwork",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "updates": {
       "fallbackToCacheTimeout": 10000,
       "checkAutomatically": "ON_LOAD",

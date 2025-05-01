@@ -6,8 +6,30 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // Создаем константу для ключа хранилища
 const MESSAGES_STORAGE_KEY = 'art_community_messages';
 
-// Начальные данные для чатов
-const initialThreads: MessageThread[] = [
+// Функция для удаления дубликатов чатов
+const removeDuplicateThreads = (threads: MessageThread[]): MessageThread[] => {
+  // Используем Map для хранения уникальных чатов по ID художника
+  const uniqueThreads = new Map<string, MessageThread>();
+  
+  // Сортируем по дате (сначала самые новые)
+  const sortedThreads = [...threads].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+  
+  // Проходим по всем чатам, сохраняя только первый (самый новый) для каждого художника
+  sortedThreads.forEach(thread => {
+    const artistId = String(thread.artist.id);
+    if (!uniqueThreads.has(artistId)) {
+      uniqueThreads.set(artistId, thread);
+    }
+  });
+  
+  // Преобразуем обратно в массив
+  return Array.from(uniqueThreads.values());
+};
+
+// Очищаем дубликаты в начальных данных
+const initialThreads: MessageThread[] = removeDuplicateThreads([
   {
     id: '1',
     artist: {
@@ -119,7 +141,7 @@ const initialThreads: MessageThread[] = [
     unread: false,
     date: '2023-07-05T18:45:00'
   }
-];
+]);
 
 // Создаем контекст для сообщений
 const MessageContext = createContext<MessageStore | null>(null);
@@ -140,11 +162,25 @@ export interface MessageStore {
   markAsRead: (threadId: string) => void;
   getThreadByArtistId: (artistId: string) => MessageThread | undefined;
   shareArtwork: (artistId: string, artwork: Artwork) => void;
+  setActiveChat?: (artistId: string | null) => void;
+  activeChat: string | null;
+  hasThreadWithArtist: (artistId: string) => boolean;
+  clearDuplicates: () => void; // Функция для очистки дубликатов
+  clearAllMessages: () => void; // Функция для полной очистки хранилища
 }
+
+// Функция для генерации уникального идентификатора
+const generateUUID = () => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
 
 // Провайдер контекста
 export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [threads, setThreads] = useState<MessageThread[]>(initialThreads);
+  const [activeChat, setActiveChat] = useState<string | null>(null);
 
   // Загружаем сообщения при инициализации
   useEffect(() => {
@@ -152,7 +188,9 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
       try {
         const savedMessages = await AsyncStorage.getItem(MESSAGES_STORAGE_KEY);
         if (savedMessages) {
-          setThreads(JSON.parse(savedMessages));
+          // Загружаем сообщения и удаляем дубликаты
+          const loadedThreads = JSON.parse(savedMessages);
+          setThreads(removeDuplicateThreads(loadedThreads));
         }
       } catch (error) {
         console.error('Ошибка при загрузке сообщений:', error);
@@ -166,7 +204,14 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
   useEffect(() => {
     const saveMessages = async () => {
       try {
-        await AsyncStorage.setItem(MESSAGES_STORAGE_KEY, JSON.stringify(threads));
+        // Удаляем дубликаты при сохранении
+        const uniqueThreads = removeDuplicateThreads(threads);
+        await AsyncStorage.setItem(MESSAGES_STORAGE_KEY, JSON.stringify(uniqueThreads));
+        
+        // Если после удаления дубликатов число чатов изменилось, обновляем состояние
+        if (uniqueThreads.length !== threads.length) {
+          setThreads(uniqueThreads);
+        }
       } catch (error) {
         console.error('Ошибка при сохранении сообщений:', error);
       }
@@ -175,22 +220,36 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
     saveMessages();
   }, [threads]);
 
+  // Функция для получения потока сообщений по ID художника
+  const getThreadByArtistId = (artistId: string) => {
+    // Преобразуем ID в строку для гарантированного сравнения
+    const targetId = String(artistId);
+    return threads.find(thread => String(thread.artist.id) === targetId);
+  };
+
   // Функция для добавления нового сообщения
   const addMessage = (artistId: string, messageData: Partial<Message>) => {
     const timestamp = new Date().toISOString();
+    // Преобразуем ID в строку для гарантированного сравнения
+    const targetId = String(artistId);
+    
+    // Генерируем уникальный идентификатор для сообщения
+    const uniqueId = `message-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
     const newMessage: Message = {
-      id: `message-${Date.now()}`,
+      id: uniqueId,
       senderId: messageData.senderId || 'current-user',
-      receiverId: messageData.receiverId || artistId,
+      receiverId: messageData.receiverId || targetId,
       content: messageData.content || '',
       timestamp,
       isRead: false,
-      subject: messageData.subject
+      subject: messageData.subject,
+      sharedArtwork: messageData.sharedArtwork
     };
 
     setThreads(prevThreads => {
       // Ищем существующий поток сообщений с художником
-      const existingThreadIndex = prevThreads.findIndex(thread => thread.artist.id === artistId);
+      const existingThreadIndex = prevThreads.findIndex(thread => String(thread.artist.id) === targetId);
 
       if (existingThreadIndex >= 0) {
         // Обновляем существующий поток
@@ -206,16 +265,16 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return updatedThreads;
       } else {
         // Создаем новый поток сообщений
-        const artwork = MOCK_ARTWORKS.find(artwork => artwork.artistId === artistId);
+        const artwork = MOCK_ARTWORKS.find(artwork => String(artwork.artistId) === targetId);
         
         if (!artwork) {
-          console.error(`Художник с ID ${artistId} не найден`);
+          console.error(`Художник с ID ${targetId} не найден`);
           return prevThreads;
         }
         
         // Создаем объект художника из данных работы
         const artist: User = {
-          id: artwork.artistId,
+          id: targetId,
           username: artwork.artistName.toLowerCase().replace(/\s+/g, '_'),
           displayName: artwork.artistName,
           avatar: artwork.artistAvatar,
@@ -228,7 +287,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
         };
         
         const newThread: MessageThread = {
-          id: `thread-${Date.now()}`,
+          id: `thread-artist-${targetId}`,
           artist,
           messages: [newMessage],
           lastMessage: newMessage.content,
@@ -236,7 +295,8 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
           date: timestamp
         };
         
-        return [...prevThreads, newThread];
+        // Возвращаем массив без дубликатов
+        return removeDuplicateThreads([...prevThreads, newThread]);
       }
     });
   };
@@ -245,7 +305,8 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const markAsRead = (threadId: string) => {
     setThreads(prevThreads => {
       return prevThreads.map(thread => {
-        if (thread.id === threadId) {
+        // Приводим ID к строке для надежного сравнения
+        if (String(thread.id) === String(threadId)) {
           const updatedMessages = thread.messages.map(message => ({
             ...message,
             isRead: true
@@ -262,18 +323,31 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
   };
 
-  // Функция для получения потока сообщений по ID художника
-  const getThreadByArtistId = (artistId: string) => {
-    return threads.find(thread => thread.artist.id === artistId);
-  };
-
   // Функция для отправки сообщения с постом
   const shareArtwork = (artistId: string, artwork: Artwork) => {
+    // Преобразуем ID в строку для гарантированного сравнения
+    const targetId = String(artistId);
+    
+    // Проверяем, существует ли уже чат с этим художником
+    const existingThread = getThreadByArtistId(targetId);
+    
+    if (existingThread) {
+      // Если чат существует, добавляем сообщение с произведением
+      addMessage(targetId, {
+        content: `Я хочу поделиться с вами работой "${artwork.title}"`,
+        sharedArtwork: artwork
+      });
+      return;
+    }
+    
+    // Если чата нет, создаем новый
     const timestamp = new Date().toISOString();
+    const uniqueId = `message-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
     const newMessage: Message = {
-      id: `message-${Date.now()}`,
+      id: uniqueId,
       senderId: 'current-user',
-      receiverId: artistId,
+      receiverId: targetId,
       content: `Я хочу поделиться с вами работой "${artwork.title}"`,
       timestamp,
       isRead: false,
@@ -281,64 +355,80 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
 
     setThreads(prevThreads => {
-      // Ищем существующий поток сообщений с художником
-      const existingThreadIndex = prevThreads.findIndex(thread => thread.artist.id === artistId);
-
-      if (existingThreadIndex >= 0) {
-        // Обновляем существующий поток
-        const updatedThreads = [...prevThreads];
-        const thread = { ...updatedThreads[existingThreadIndex] };
-        
-        thread.messages = [...thread.messages, newMessage];
-        thread.lastMessage = `Работа: ${artwork.title} • ${artwork.artistName}`;
-        thread.date = timestamp;
-        thread.unread = false;
-        
-        updatedThreads[existingThreadIndex] = thread;
-        return updatedThreads;
-      } else {
-        // Создаем новый поток сообщений
-        const artistData = MOCK_ARTWORKS.find(a => a.artistId === artistId);
-        
-        if (!artistData) {
-          console.error(`Художник с ID ${artistId} не найден`);
-          return prevThreads;
-        }
-        
-        // Создаем объект художника из данных работы
-        const artistUser: User = {
-          id: artistData.artistId,
-          username: artistData.artistName.toLowerCase().replace(/\s+/g, '_'),
-          displayName: artistData.artistName,
-          avatar: artistData.artistAvatar,
-          bio: `Художник ${artistData.artistName}`,
-          artStyles: [],
-          followers: 0,
-          following: 0,
-          createdAt: new Date().toISOString().split('T')[0],
-          socialLinks: {}
-        };
-        
-        const newThread: MessageThread = {
-          id: `thread-${Date.now()}`,
-          artist: artistUser,
-          messages: [newMessage],
-          lastMessage: `Работа: ${artwork.title} • ${artwork.artistName}`,
-          unread: false,
-          date: timestamp
-        };
-        
-        return [...prevThreads, newThread];
+      // Создаем новый поток сообщений
+      const artistData = MOCK_ARTWORKS.find(a => String(a.artistId) === targetId);
+      
+      if (!artistData) {
+        console.error(`Художник с ID ${targetId} не найден`);
+        return prevThreads;
       }
+      
+      // Создаем объект художника из данных работы
+      const artistUser: User = {
+        id: targetId,
+        username: artistData.artistName.toLowerCase().replace(/\s+/g, '_'),
+        displayName: artistData.artistName,
+        avatar: artistData.artistAvatar,
+        bio: `Художник ${artistData.artistName}`,
+        artStyles: [],
+        followers: 0,
+        following: 0,
+        createdAt: new Date().toISOString().split('T')[0],
+        socialLinks: {}
+      };
+      
+      const newThread: MessageThread = {
+        id: `thread-artist-${targetId}`,
+        artist: artistUser,
+        messages: [newMessage],
+        lastMessage: `Работа: ${artwork.title} • ${artwork.artistName}`,
+        unread: false,
+        date: timestamp
+      };
+      
+      // Возвращаем массив без дубликатов
+      return removeDuplicateThreads([...prevThreads, newThread]);
     });
   };
 
+  // Функция для проверки существования чата
+  const hasThreadWithArtist = (artistId: string) => {
+    // Убедимся, что ID преобразован в строку для корректного сравнения
+    const targetId = String(artistId);
+    // Используем some для поиска хотя бы одного совпадения
+    return threads.some(thread => String(thread.artist.id) === targetId);
+  };
+  
+  // Функция для принудительной очистки дубликатов
+  const clearDuplicates = () => {
+    const uniqueThreads = removeDuplicateThreads(threads);
+    if (uniqueThreads.length !== threads.length) {
+      setThreads(uniqueThreads);
+    }
+  };
+
+  // Функция для полной очистки хранилища сообщений
+  const clearAllMessages = async () => {
+    try {
+      await AsyncStorage.removeItem(MESSAGES_STORAGE_KEY);
+      setThreads(initialThreads);
+      console.log("Все сообщения очищены, установлены начальные значения");
+    } catch (error) {
+      console.error('Ошибка при очистке хранилища сообщений:', error);
+    }
+  };
+
   const contextValue: MessageStore = {
-    threads,
+    threads: removeDuplicateThreads(threads),
     addMessage,
     markAsRead,
     getThreadByArtistId,
-    shareArtwork
+    shareArtwork,
+    setActiveChat: (artistId: string | null) => setActiveChat(artistId),
+    activeChat,
+    hasThreadWithArtist,
+    clearDuplicates,
+    clearAllMessages
   };
 
   return (
