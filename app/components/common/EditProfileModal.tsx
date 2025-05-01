@@ -15,6 +15,14 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { User } from '@/app/models/types';
 
+// Список доступных категорий фотографий (те же, что в регистрации)
+const PHOTO_CATEGORIES = [
+  'Портрет', 'Пейзаж', 'Макро', 'Архитектура', 
+  'Уличная', 'Репортаж', 'Дикая природа', 'Натюрморт',
+  'Черно-белая', 'Спорт', 'Мода', 'Свадебная',
+  'Ночная', 'Документальная', 'Аэрофотосъемка', 'Подводная'
+];
+
 interface EditProfileModalProps {
   visible: boolean;
   user: User;
@@ -31,6 +39,17 @@ export function EditProfileModal({ visible, user, onClose, onSave }: EditProfile
   const [instagram, setInstagram] = useState(user.socialLinks?.instagram || '');
   const [behance, setBehance] = useState(user.socialLinks?.behance || '');
   const [artstation, setArtstation] = useState(user.socialLinks?.artstation || '');
+  const [selectedPhotoCategories, setSelectedPhotoCategories] = useState<string[]>(
+    user.photoCategories || []
+  );
+
+  const togglePhotoCategory = (category: string) => {
+    if (selectedPhotoCategories.includes(category)) {
+      setSelectedPhotoCategories(selectedPhotoCategories.filter(c => c !== category));
+    } else {
+      setSelectedPhotoCategories([...selectedPhotoCategories, category]);
+    }
+  };
 
   const handleSave = () => {
     const updatedUser: User = {
@@ -40,6 +59,7 @@ export function EditProfileModal({ visible, user, onClose, onSave }: EditProfile
       bio,
       location,
       websiteUrl,
+      photoCategories: selectedPhotoCategories,
       socialLinks: {
         ...user.socialLinks,
         instagram,
@@ -136,6 +156,29 @@ export function EditProfileModal({ visible, user, onClose, onSave }: EditProfile
               placeholder="www.example.com"
               keyboardType="url"
             />
+            
+            <ThemedText style={styles.sectionTitle}>Категории фотографий</ThemedText>
+            <View style={styles.categoriesContainer}>
+              {PHOTO_CATEGORIES.map((category) => (
+                <TouchableOpacity
+                  key={category}
+                  style={[
+                    styles.categoryTag,
+                    selectedPhotoCategories.includes(category) && styles.selectedCategoryTag
+                  ]}
+                  onPress={() => togglePhotoCategory(category)}
+                >
+                  <ThemedText 
+                    style={[
+                      styles.categoryTagText,
+                      selectedPhotoCategories.includes(category) && styles.selectedCategoryTagText
+                    ]}
+                  >
+                    {category}
+                  </ThemedText>
+                </TouchableOpacity>
+              ))}
+            </View>
             
             <ThemedText style={styles.sectionTitle}>Социальные сети</ThemedText>
             
@@ -249,21 +292,20 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#fff',
   },
   formSection: {
     padding: 16,
   },
   inputLabel: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 4,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: '#555',
   },
   input: {
     backgroundColor: '#f5f5f5',
@@ -273,7 +315,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   bioInput: {
-    height: 100,
+    minHeight: 100,
     textAlignVertical: 'top',
   },
   sectionTitle: {
@@ -281,6 +323,33 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginTop: 8,
     marginBottom: 16,
+  },
+  categoriesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 16,
+  },
+  categoryTag: {
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  selectedCategoryTag: {
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+    borderColor: 'rgba(76, 175, 80, 0.5)',
+  },
+  categoryTagText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  selectedCategoryTagText: {
+    color: '#4CAF50',
+    fontWeight: '500',
   },
   socialInput: {
     flexDirection: 'row',

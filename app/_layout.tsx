@@ -1,10 +1,12 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { StatusBar, View, Alert, Platform } from 'react-native';
 import { MessageProvider } from '@/app/context/MessageContext';
+import { AuthProvider, useAuth } from '@/app/context/AuthContext';
+import { ArtworkProvider } from '@/app/context/ArtworkContext';
 import 'react-native-reanimated';
 import * as Updates from 'expo-updates';
 import { ThemeProvider } from '@react-navigation/native';
@@ -23,6 +25,31 @@ export const unstable_settings = {
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
+
+// Компонент для проверки аутентификации и перенаправления
+function AuthenticationGuard({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    const inAuthGroup = segments[0] === 'auth';
+
+    if (!isAuthenticated && !inAuthGroup) {
+      // Если пользователь не авторизован и не находится на экране авторизации,
+      // перенаправляем на экран выбора между авторизацией и регистрацией
+      router.replace('/auth');
+    } else if (isAuthenticated && inAuthGroup) {
+      // Если пользователь авторизован и находится на экране авторизации,
+      // перенаправляем на главный экран
+      router.replace('/(tabs)');
+    }
+  }, [isAuthenticated, isLoading, segments]);
+
+  return <>{children}</>;
+}
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -84,16 +111,22 @@ export default function RootLayout() {
 
 function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' }) {
   return (
-    <MessageProvider>
-      <View style={{ flex: 1 }}>
-        <StatusBar barStyle="dark-content" />
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="+not-found" />
-          </Stack>
-        </ThemeProvider>
-      </View>
-    </MessageProvider>
+    <AuthProvider>
+      <ArtworkProvider>
+        <MessageProvider>
+          <View style={{ flex: 1 }}>
+            <StatusBar barStyle="dark-content" />
+            <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="auth" options={{ headerShown: false }} />
+                <Stack.Screen name="+not-found" />
+              </Stack>
+              <AuthenticationGuard />
+            </ThemeProvider>
+          </View>
+        </MessageProvider>
+      </ArtworkProvider>
+    </AuthProvider>
   );
 }

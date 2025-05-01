@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, TouchableOpacity, ScrollView, Text, Alert } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -7,113 +7,12 @@ import { ProfileHeader } from '@/app/components/common/ProfileHeader';
 import { GalleryGrid } from '@/app/components/gallery/GalleryGrid';
 import { EditProfileModal } from '@/app/components/common/EditProfileModal';
 import { User, Artwork } from '@/app/models/types';
+import { useAuth } from '@/app/context/AuthContext';
+import { useArtworks } from '@/app/context/ArtworkContext';
+import { LinearGradient } from 'expo-linear-gradient';
+import { UploadArtworkModal } from '@/app/components/artwork/UploadArtworkModal';
 
-// Моковые данные для текущего пользователя
-const INITIAL_USER: User = {
-  id: '1',
-  username: 'artmaster',
-  displayName: 'Михаил Лебедев',
-  bio: 'Художник-иллюстратор из Санкт-Петербурга. Специализируюсь на акварельной живописи и скетчах городских пейзажей. Открыт для заказов и сотрудничества.',
-  avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d',
-  coverImage: 'https://images.unsplash.com/photo-1513151233558-d860c5398176',
-  artStyles: ['Акварель', 'Скетчинг', 'Городской пейзаж'],
-  skills: ['Портрет', 'Пейзаж', 'Книжная иллюстрация'],
-  location: 'Санкт-Петербург',
-  websiteUrl: 'www.mikhailart.ru',
-  socialLinks: {
-    instagram: 'mikhart',
-    behance: 'mikhaillebedey',
-    artstation: 'mikhailart'
-  },
-  isVerified: true,
-  followers: 1250,
-  following: 145,
-  createdAt: '2023-01-15'
-};
-
-// Моковые данные работ пользователя
-const USER_ARTWORKS: Artwork[] = [
-  {
-    id: '1',
-    title: 'Городской пейзаж на закате',
-    description: 'Городской пейзаж, написанный маслом, изображающий город на закате.',
-    images: ['https://images.unsplash.com/photo-1535930891776-0c2dfb7fda1a'],
-    thumbnailUrl: 'https://images.unsplash.com/photo-1535930891776-0c2dfb7fda1a',
-    artistId: '1',
-    artistName: 'Михаил Лебедев',
-    artistAvatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d',
-    categories: ['Живопись'],
-    tags: ['пейзаж', 'город', 'масло'],
-    medium: 'Масло',
-    likes: 245,
-    views: 1203,
-    comments: 48,
-    isForSale: true,
-    price: 12000,
-    currency: 'RUB',
-    createdAt: '2023-09-15'
-  },
-  {
-    id: '4',
-    title: 'Акварельный скетч Петербурга',
-    description: 'Быстрый акварельный скетч исторического центра Санкт-Петербурга.',
-    images: ['https://images.unsplash.com/photo-1564769625905-42a042a2d458'],
-    thumbnailUrl: 'https://images.unsplash.com/photo-1564769625905-42a042a2d458',
-    artistId: '1',
-    artistName: 'Михаил Лебедев',
-    artistAvatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d',
-    categories: ['Живопись', 'Скетч'],
-    tags: ['акварель', 'Петербург', 'скетч'],
-    medium: 'Акварель',
-    dimensions: '30x20 см',
-    likes: 189,
-    views: 870,
-    comments: 32,
-    isForSale: true,
-    price: 8000,
-    currency: 'RUB',
-    createdAt: '2023-10-22'
-  },
-  {
-    id: '5',
-    title: 'Портрет незнакомки',
-    description: 'Портрет девушки в технике сухая кисть.',
-    images: ['https://images.unsplash.com/photo-1621784563330-caee0b138a00'],
-    thumbnailUrl: 'https://images.unsplash.com/photo-1621784563330-caee0b138a00',
-    artistId: '1',
-    artistName: 'Михаил Лебедев',
-    artistAvatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d',
-    categories: ['Портрет'],
-    tags: ['портрет', 'девушка', 'сухая кисть'],
-    medium: 'Сухая кисть',
-    dimensions: '40x60 см',
-    likes: 312,
-    views: 1420,
-    comments: 56,
-    isForSale: false,
-    createdAt: '2023-11-05'
-  },
-  {
-    id: '6',
-    title: 'Эскиз для книжной иллюстрации',
-    description: 'Эскиз для детской книги "Волшебный лес".',
-    images: ['https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe'],
-    thumbnailUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe',
-    artistId: '1',
-    artistName: 'Михаил Лебедев',
-    artistAvatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d',
-    categories: ['Иллюстрация'],
-    tags: ['детская книга', 'иллюстрация', 'эскиз'],
-    medium: 'Смешанная техника',
-    likes: 175,
-    views: 690,
-    comments: 28,
-    isForSale: false,
-    createdAt: '2023-12-01'
-  }
-];
-
-// Моковые данные для сохраненных работ
+// Моковые данные для сохраненных и понравившихся работ - эти данные будут использоваться только для демо
 const SAVED_ARTWORKS: Artwork[] = [
   {
     id: '8',
@@ -156,7 +55,6 @@ const SAVED_ARTWORKS: Artwork[] = [
   }
 ];
 
-// Моковые данные для понравившихся работ
 const LIKED_ARTWORKS: Artwork[] = [
   {
     id: '3',
@@ -222,25 +120,139 @@ const LIKED_ARTWORKS: Artwork[] = [
   }
 ];
 
+// Компонент для отображения пустого состояния
+function EmptyState({ activeTab, onUpload }: { activeTab: TabType, onUpload?: () => void }) {
+  let icon = 'image';
+  let title = 'У вас пока нет работ';
+  let message = 'Добавьте свои художественные работы, чтобы они отображались здесь.';
+  
+  if (activeTab === 'saved') {
+    icon = 'bookmark';
+    title = 'Нет сохраненных работ';
+    message = 'Сохраняйте интересные работы, нажимая на значок закладки.';
+  } else if (activeTab === 'liked') {
+    icon = 'heart';
+    title = 'Нет понравившихся работ';
+    message = 'Отмечайте понравившиеся работы, нажимая на значок сердца.';
+  }
+  
+  return (
+    <View style={styles.emptyContainer}>
+      <View style={styles.emptyIconContainer}>
+        <FontAwesome name={icon} size={40} color="#ccc" />
+      </View>
+      <ThemedText style={styles.emptyTitle}>{title}</ThemedText>
+      <ThemedText style={styles.emptyMessage}>{message}</ThemedText>
+      
+      {activeTab === 'works' && onUpload && (
+        <TouchableOpacity style={styles.addButton} onPress={onUpload}>
+          <LinearGradient
+            colors={['#0a7ea4', '#0a6ea4']}
+            style={styles.addButtonGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <View style={styles.addButtonContent}>
+              <FontAwesome name="plus" size={16} color="#fff" style={styles.addButtonIcon} />
+              <ThemedText style={styles.addButtonText}>Загрузить работу</ThemedText>
+            </View>
+          </LinearGradient>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+}
+
 type TabType = 'works' | 'saved' | 'liked';
 
 export default function ProfileScreen() {
+  const { user, logout } = useAuth(); // Получаем пользователя и функцию выхода из AuthContext
+  const { userArtworks, isLoading: isLoadingArtworks } = useArtworks(); // Получаем работы пользователя из ArtworkContext
+  
   const [activeTab, setActiveTab] = useState<TabType>('works');
-  const [user, setUser] = useState<User>(INITIAL_USER);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [isUploadModalVisible, setIsUploadModalVisible] = useState(false);
+  
+  // Определяем, является ли пользователь новым (только что зарегистрированным)
+  const isNewUser = !!(user && user.id.startsWith('user-'));
 
+  // Устанавливаем пользователя из AuthContext при инициализации
+  useEffect(() => {
+    if (user) {
+      setCurrentUser(user);
+    }
+  }, [user]);
+
+  // Обработчик редактирования профиля
   const handleEditProfile = () => {
     setIsEditModalVisible(true);
   };
 
-  const handleSaveProfile = (updatedUser: User) => {
-    setUser(updatedUser);
+  // Обработчик выхода из аккаунта
+  const handleLogout = () => {
+    Alert.alert(
+      'Выход из аккаунта',
+      'Вы уверены, что хотите выйти?',
+      [
+        { text: 'Отмена', style: 'cancel' },
+        { 
+          text: 'Выйти', 
+          onPress: async () => {
+            try {
+              await logout();
+              // После выхода пользователь будет автоматически перенаправлен на экран авторизации
+              // благодаря логике AuthenticationGuard в _layout.tsx
+            } catch (error) {
+              console.error('Ошибка при выходе из аккаунта:', error);
+              Alert.alert('Ошибка', 'Не удалось выйти из аккаунта. Пожалуйста, попробуйте еще раз.');
+            }
+          },
+          style: 'destructive'
+        }
+      ]
+    );
   };
 
+  // Обработчик сохранения изменений профиля
+  const handleSaveProfile = (updatedUser: User) => {
+    setCurrentUser(updatedUser);
+    // Здесь можно добавить логику для сохранения обновленных данных в API или AuthContext
+  };
+
+  // Обработчик открытия модального окна загрузки работы
+  const handleOpenUploadModal = () => {
+    setIsUploadModalVisible(true);
+  };
+
+  // Обработчик успешной загрузки работы
+  const handleUploadSuccess = () => {
+    // При необходимости здесь можно добавить дополнительную логику
+  };
+
+  // Отображение содержимого активной вкладки
   const renderTabContent = () => {
+    // Для вкладки работ используем данные из контекста
+    if (activeTab === 'works') {
+      // Проверяем, есть ли у пользователя работы
+      if (userArtworks.length === 0) {
+        return (
+          <EmptyState 
+            activeTab={activeTab} 
+            onUpload={handleOpenUploadModal} 
+          />
+        );
+      }
+      
+      return <GalleryGrid artworks={userArtworks} compact={true} />;
+    }
+    
+    // Для демо аккаунтов показываем моковые данные, для новых пользователей - пустое состояние
+    if (isNewUser) {
+      return <EmptyState activeTab={activeTab} />;
+    }
+    
     switch (activeTab) {
-      case 'works':
-        return <GalleryGrid artworks={USER_ARTWORKS} compact={true} />;
       case 'saved':
         return <GalleryGrid artworks={SAVED_ARTWORKS} compact={true} />;
       case 'liked':
@@ -250,55 +262,117 @@ export default function ProfileScreen() {
     }
   };
 
+  // Если данные загружаются, показываем индикатор загрузки
+  if (isLoadingArtworks) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <ThemedText>Загрузка...</ThemedText>
+      </View>
+    );
+  }
+
   return (
     <ThemedView style={styles.container}>
-      <View style={styles.headerSection}>
+      <ScrollView showsVerticalScrollIndicator={false}>
         <ProfileHeader 
-          user={user} 
-          isCurrentUser={true} 
+          user={currentUser}
+          isCurrentUser={true}
           onEditProfile={handleEditProfile}
         />
         
-        <ThemedView style={styles.tabContainer}>
-          <TouchableOpacity 
-            style={[styles.tab, activeTab === 'works' && styles.activeTab]}
+        {/* Кнопка выхода из аккаунта */}
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <FontAwesome name="sign-out" size={18} color="#e74c3c" style={styles.logoutIcon} />
+          <ThemedText style={styles.logoutText}>Выйти из аккаунта</ThemedText>
+        </TouchableOpacity>
+        
+        <View style={styles.tabContainer}>
+          <TouchableOpacity
+            style={[styles.tabButton, activeTab === 'works' && styles.activeTab]}
             onPress={() => setActiveTab('works')}
           >
-            <FontAwesome name="th" size={18} color={activeTab === 'works' ? "#0a7ea4" : "#888"} />
-            <ThemedText style={activeTab === 'works' ? styles.activeTabText : styles.tabText}>
+            <FontAwesome 
+              name="image" 
+              size={22}
+              color={activeTab === 'works' ? '#0a7ea4' : '#888'} 
+            />
+            <ThemedText 
+              style={[styles.tabText, activeTab === 'works' && styles.activeTabText]}
+            >
               Работы
             </ThemedText>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.tab, activeTab === 'saved' && styles.activeTab]}
+          
+          <TouchableOpacity
+            style={[styles.tabButton, activeTab === 'saved' && styles.activeTab]}
             onPress={() => setActiveTab('saved')}
           >
-            <FontAwesome name="bookmark" size={18} color={activeTab === 'saved' ? "#0a7ea4" : "#888"} />
-            <ThemedText style={activeTab === 'saved' ? styles.activeTabText : styles.tabText}>
+            <FontAwesome 
+              name="bookmark" 
+              size={22} 
+              color={activeTab === 'saved' ? '#0a7ea4' : '#888'} 
+            />
+            <ThemedText 
+              style={[styles.tabText, activeTab === 'saved' && styles.activeTabText]}
+            >
               Сохраненные
             </ThemedText>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.tab, activeTab === 'liked' && styles.activeTab]}
+          
+          <TouchableOpacity
+            style={[styles.tabButton, activeTab === 'liked' && styles.activeTab]}
             onPress={() => setActiveTab('liked')}
           >
-            <FontAwesome name="heart" size={18} color={activeTab === 'liked' ? "#0a7ea4" : "#888"} />
-            <ThemedText style={activeTab === 'liked' ? styles.activeTabText : styles.tabText}>
+            <FontAwesome 
+              name="heart" 
+              size={22} 
+              color={activeTab === 'liked' ? '#0a7ea4' : '#888'} 
+            />
+            <ThemedText 
+              style={[styles.tabText, activeTab === 'liked' && styles.activeTabText]}
+            >
               Понравившиеся
             </ThemedText>
           </TouchableOpacity>
-        </ThemedView>
-      </View>
+        </View>
+        
+        <View style={styles.contentContainer}>
+          {renderTabContent()}
+        </View>
+      </ScrollView>
       
-      <View style={styles.contentContainer}>
-        {renderTabContent()}
-      </View>
-
-      <EditProfileModal 
-        visible={isEditModalVisible}
-        user={user}
-        onClose={() => setIsEditModalVisible(false)}
-        onSave={handleSaveProfile}
+      {/* Плавающая кнопка для добавления работы */}
+      {activeTab === 'works' && (
+        <TouchableOpacity 
+          style={styles.floatingButton}
+          onPress={handleOpenUploadModal}
+        >
+          <LinearGradient
+            colors={['#0a7ea4', '#0a6ea4']}
+            style={styles.floatingButtonGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <FontAwesome name="plus" size={22} color="#fff" />
+          </LinearGradient>
+        </TouchableOpacity>
+      )}
+      
+      {/* Модальное окно редактирования профиля */}
+      {isEditModalVisible && currentUser && (
+        <EditProfileModal
+          visible={isEditModalVisible}
+          user={currentUser}
+          onSave={handleSaveProfile}
+          onClose={() => setIsEditModalVisible(false)}
+        />
+      )}
+      
+      {/* Модальное окно загрузки работы */}
+      <UploadArtworkModal 
+        visible={isUploadModalVisible}
+        onClose={() => setIsUploadModalVisible(false)}
+        onSuccess={handleUploadSuccess}
       />
     </ThemedView>
   );
@@ -308,36 +382,128 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  headerSection: {
-    paddingBottom: 8,
-  },
-  contentContainer: {
-    flex: 1,
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   tabContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    paddingVertical: 12,
+    borderBottomColor: '#e0e0e0',
   },
-  tab: {
-    flexDirection: 'row',
+  tabButton: {
+    flex: 1,
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  tabText: {
+    fontSize: 14,
+    marginLeft: 6,
+    color: '#888',
   },
   activeTab: {
     borderBottomWidth: 2,
     borderBottomColor: '#0a7ea4',
   },
-  tabText: {
-    marginLeft: 8,
-    color: '#888',
-  },
   activeTabText: {
-    marginLeft: 8,
     color: '#0a7ea4',
+    fontWeight: '500',
+  },
+  contentContainer: {
+    paddingVertical: 16,
+    flex: 1,
+  },
+  emptyContainer: {
+    padding: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 300,
+  },
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#f5f5f5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptyMessage: {
+    fontSize: 14,
+    color: '#888',
+    textAlign: 'center',
+    maxWidth: 270,
+    lineHeight: 20,
+  },
+  addButton: {
+    marginTop: 20,
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  addButtonGradient: {
+    padding: 12,
+    borderRadius: 8,
+  },
+  addButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addButtonIcon: {
+    marginRight: 8,
+  },
+  addButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#fff',
+  },
+  floatingButton: {
+    position: 'absolute',
+    right: 20,
+    bottom: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  floatingButtonGradient: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    marginHorizontal: 16,
+    marginTop: 10,
+    marginBottom: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e74c3c',
+    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+  },
+  logoutIcon: {
+    marginRight: 8,
+  },
+  logoutText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#e74c3c',
   },
 });

@@ -8,6 +8,7 @@ export interface User {
   avatar: string;
   bio: string;
   artStyles: string[];
+  photoCategories?: string[]; // Категории фотографий, в которых работает пользователь
   skills?: string[];
   location?: string;
   socialLinks: {

@@ -83,13 +83,33 @@ export function ProfileHeader({
           </View>
         </View>
         
-        <View style={styles.tagContainer}>
-          {user.artStyles.map((style, index) => (
-            <View key={index} style={styles.tag}>
-              <ThemedText style={styles.tagText}>{style}</ThemedText>
+        {/* Стили искусства */}
+        {user.artStyles && user.artStyles.length > 0 && (
+          <View style={styles.tagsSection}>
+            <ThemedText style={styles.tagsTitle}>Стили искусства</ThemedText>
+            <View style={styles.tagContainer}>
+              {user.artStyles.map((style, index) => (
+                <View key={index} style={styles.tag}>
+                  <ThemedText style={styles.tagText}>{style}</ThemedText>
+                </View>
+              ))}
             </View>
-          ))}
-        </View>
+          </View>
+        )}
+        
+        {/* Категории фотографий */}
+        {user.photoCategories && user.photoCategories.length > 0 && (
+          <View style={styles.tagsSection}>
+            <ThemedText style={styles.tagsTitle}>Категории фотографий</ThemedText>
+            <View style={styles.tagContainer}>
+              {user.photoCategories.map((category, index) => (
+                <View key={index} style={[styles.tag, styles.photoTag]}>
+                  <ThemedText style={styles.tagText}>{category}</ThemedText>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
         
         {isCurrentUser ? (
           <TouchableOpacity style={styles.editButton} onPress={onEditProfile}>
@@ -236,11 +256,21 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#888',
   },
+  tagsSection: {
+    marginVertical: 8,
+    width: '100%',
+  },
+  tagsTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
   tagContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   tag: {
     backgroundColor: 'rgba(10, 126, 164, 0.1)',
@@ -249,9 +279,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginRight: 8,
     marginBottom: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(10, 126, 164, 0.2)',
+  },
+  photoTag: {
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+    borderColor: 'rgba(76, 175, 80, 0.2)',
   },
   tagText: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#0a7ea4',
   },
   editButton: {
