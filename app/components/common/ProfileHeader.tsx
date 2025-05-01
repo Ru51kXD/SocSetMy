@@ -6,11 +6,12 @@ import { ThemedView } from '@/components/ThemedView';
 import { User } from '@/app/models/types';
 
 interface ProfileHeaderProps {
-  user: User;
+  user: User | null;
   isCurrentUser?: boolean;
   isFollowing?: boolean;
   onFollow?: () => void;
   onMessage?: () => void;
+  onEditProfile?: () => void;
 }
 
 const { width } = Dimensions.get('window');
@@ -20,8 +21,21 @@ export function ProfileHeader({
   isCurrentUser = false, 
   isFollowing = false,
   onFollow,
-  onMessage
+  onMessage,
+  onEditProfile
 }: ProfileHeaderProps) {
+  // Если пользователь не загружен, показываем заглушку
+  if (!user) {
+    return (
+      <ThemedView style={styles.container}>
+        <View style={styles.placeholderCover} />
+        <View style={styles.profileInfo}>
+          <ThemedText style={styles.loadingText}>Загрузка профиля...</ThemedText>
+        </View>
+      </ThemedView>
+    );
+  }
+
   return (
     <ThemedView style={styles.container}>
       <Image 
@@ -77,7 +91,11 @@ export function ProfileHeader({
           ))}
         </View>
         
-        {!isCurrentUser && (
+        {isCurrentUser ? (
+          <TouchableOpacity style={styles.editButton} onPress={onEditProfile}>
+            <ThemedText style={styles.editButtonText}>Редактировать профиль</ThemedText>
+          </TouchableOpacity>
+        ) : (
           <View style={styles.actionButtons}>
             <TouchableOpacity 
               style={[styles.actionButton, isFollowing ? styles.unfollowButton : styles.followButton]} 
@@ -121,6 +139,8 @@ export function ProfileHeader({
   );
 }
 
+export default ProfileHeader;
+
 const styles = StyleSheet.create({
   container: {
     marginBottom: 16,
@@ -129,6 +149,17 @@ const styles = StyleSheet.create({
     width: width,
     height: 160,
     resizeMode: 'cover',
+  },
+  placeholderCover: {
+    width: width,
+    height: 160,
+    backgroundColor: '#e0e0e0',
+  },
+  loadingText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginVertical: 20,
+    color: '#888',
   },
   avatarContainer: {
     position: 'relative',
@@ -222,6 +253,18 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: 12,
     color: '#0a7ea4',
+  },
+  editButton: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    marginVertical: 8,
+  },
+  editButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
   actionButtons: {
     flexDirection: 'row',

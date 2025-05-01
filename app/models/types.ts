@@ -5,24 +5,21 @@ export interface User {
   id: string;
   username: string;
   displayName: string;
-  bio: string;
   avatar: string;
-  coverImage?: string;
+  bio: string;
   artStyles: string[];
-  skills: string[];
+  skills?: string[];
   location?: string;
-  websiteUrl?: string;
   socialLinks: {
     instagram?: string;
-    twitter?: string;
     behance?: string;
     artstation?: string;
-    pinterest?: string;
   };
-  isVerified: boolean;
+  isVerified?: boolean;
   followers: number;
   following: number;
   createdAt: string;
+  coverImage?: string;
 }
 
 // Модель работы художника
@@ -95,5 +92,36 @@ export interface ArtCategory {
   name: string;
   description: string;
   imageUrl: string;
-  artworkCount: number;
+  artworkCount?: number;
+  longDescription?: string;
+}
+
+// Интерфейс для сообщения
+export interface Message {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  content: string;
+  timestamp: string;
+  isRead: boolean;
+  subject?: string; // Тема сообщения
+  sharedArtwork?: Artwork; // Прикрепленный пост/работа
+}
+
+// Интерфейс для потока сообщений (чата)
+export interface MessageThread {
+  id: string;
+  artist: User;
+  messages: Message[];
+  lastMessage: string;
+  unread: boolean;
+  date: string;
+}
+
+// Интерфейс для хранилища сообщений
+export interface MessageStore {
+  threads: MessageThread[];
+  addMessage: (artistId: string, message: Partial<Message>) => void;
+  markAsRead: (threadId: string) => void;
+  getThreadByArtistId: (artistId: string) => MessageThread | undefined;
 } 

@@ -3,14 +3,22 @@ import { StyleSheet, FlatList, TouchableOpacity, Image, View, Dimensions } from 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ArtCategory } from '@/app/models/types';
+import { useRouter } from 'expo-router';
 
 interface CategoryListProps {
   categories: ArtCategory[];
+  horizontal?: boolean;
+  props?: any;
 }
 
-export function CategoryList({ categories }: CategoryListProps) {
+export function CategoryList({ categories, horizontal, props }: CategoryListProps) {
+  const router = useRouter();
+  
   const renderItem = ({ item }: { item: ArtCategory }) => (
-    <TouchableOpacity style={styles.categoryItem}>
+    <TouchableOpacity 
+      style={styles.categoryItem}
+      onPress={() => router.push(`/category/${item.id}`)}
+    >
       <Image source={{ uri: item.imageUrl }} style={styles.categoryImage} />
       <View style={styles.categoryOverlay}>
         <ThemedText style={styles.categoryName}>{item.name}</ThemedText>
@@ -22,16 +30,23 @@ export function CategoryList({ categories }: CategoryListProps) {
   return (
     <ThemedView style={styles.container}>
       <FlatList
-        horizontal
         data={categories}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+        horizontal={horizontal}
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.listContent}
+        keyExtractor={(item) => `category-list-${item.id}`}
+        contentContainerStyle={[
+          styles.listContent,
+          horizontal && styles.horizontalListContent
+        ]}
+        {...props}
       />
     </ThemedView>
   );
 }
+
+// Добавляем экспорт по умолчанию
+export default CategoryList;
 
 const { width } = Dimensions.get('window');
 const ITEM_WIDTH = width * 0.7;
@@ -76,5 +91,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#fff',
     opacity: 0.8,
+  },
+  horizontalListContent: {
+    paddingHorizontal: 0,
   },
 }); 

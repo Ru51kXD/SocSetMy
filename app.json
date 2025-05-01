@@ -7,7 +7,12 @@
     "icon": "./assets/images/icon.png",
     "scheme": "artnetwork",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
+    "updates": {
+      "fallbackToCacheTimeout": 10000,
+      "checkAutomatically": "ON_LOAD",
+      "enabled": true
+    },
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
@@ -19,7 +24,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "permissions": ["android.permission.READ_EXTERNAL_STORAGE", "android.permission.WRITE_EXTERNAL_STORAGE"]
+      "permissions": ["android.permission.READ_EXTERNAL_STORAGE", "android.permission.WRITE_EXTERNAL_STORAGE", "android.permission.INTERNET"]
     },
     "web": {
       "bundler": "metro",
@@ -43,10 +48,14 @@
           "photosPermission": "АртСеть использует вашу камеру для загрузки ваших работ.",
           "cameraPermission": "АртСеть использует вашу фотогалерею для загрузки ваших работ."
         }
-      ]
+      ],
+      "expo-updates"
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
     }
   }
 }

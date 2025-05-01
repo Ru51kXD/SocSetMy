@@ -5,17 +5,11 @@ import { ThemedText } from '@/components/ThemedText';
 import { ArtworkCard } from '@/app/components/common/ArtworkCard';
 import { CategoryList } from '@/app/components/common/CategoryList';
 import { FeaturedArtists } from '@/app/components/common/FeaturedArtists';
-import { User, Artwork, ArtCategory } from '@/app/models/types';
+import { User, Artwork } from '@/app/models/types';
+import { MOCK_CATEGORIES } from '@/app/data/categories';
+import { MOCK_ARTWORKS } from '@/app/data/artworks';
 
 // Моковые данные для демонстрации
-const MOCK_CATEGORIES: ArtCategory[] = [
-  { id: '1', name: 'Цифровая живопись', artworkCount: 1245, imageUrl: 'https://picsum.photos/id/111/300/200' },
-  { id: '2', name: 'Традиционная живопись', artworkCount: 842, imageUrl: 'https://picsum.photos/id/152/300/200' },
-  { id: '3', name: 'Скульптуры', artworkCount: 430, imageUrl: 'https://picsum.photos/id/133/300/200' },
-  { id: '4', name: 'Фотография', artworkCount: 950, imageUrl: 'https://picsum.photos/id/154/300/200' },
-  { id: '5', name: 'Концепт-арт', artworkCount: 720, imageUrl: 'https://picsum.photos/id/165/300/200' },
-];
-
 const MOCK_FEATURED_ARTISTS: User[] = [
   {
     id: '1',
@@ -64,11 +58,13 @@ const MOCK_FEATURED_ARTISTS: User[] = [
   },
 ];
 
+// Используем фиксированные данные из импортированного MOCK_ARTWORKS
 const MOCK_TRENDING_ARTWORKS: Artwork[] = [
-  {
+  // Находим работу "Закат в горах" Марины Ивановой из MOCK_ARTWORKS
+  MOCK_ARTWORKS.find(artwork => artwork.id === '1') || {
     id: '1',
     title: 'Закат в горах',
-    description: 'Акварельная живопись вечернего заката в горах',
+    description: 'Акварельная живопись вечернего заката в горах. Работа выполнена на бумаге высокого качества с использованием профессиональных акварельных красок.',
     images: ['https://picsum.photos/id/111/800/800'],
     thumbnailUrl: 'https://picsum.photos/id/111/800/800',
     artistId: '1',
@@ -77,6 +73,8 @@ const MOCK_TRENDING_ARTWORKS: Artwork[] = [
     categories: ['Живопись'],
     tags: ['пейзаж', 'закат', 'горы'],
     medium: 'Акварель',
+    dimensions: '40x30 см',
+    createdYear: 2023,
     likes: 450,
     views: 1230,
     comments: 28,
@@ -85,7 +83,8 @@ const MOCK_TRENDING_ARTWORKS: Artwork[] = [
     currency: 'RUB',
     createdAt: '2023-05-12'
   },
-  {
+  // Находим работу Алексея Петрова
+  MOCK_ARTWORKS.find(artwork => artwork.artistId === '2') || {
     id: '2',
     title: 'Абстрактная композиция #5',
     description: 'Абстрактная композиция с использованием акриловых красок',
@@ -103,7 +102,8 @@ const MOCK_TRENDING_ARTWORKS: Artwork[] = [
     isForSale: false,
     createdAt: '2023-06-21'
   },
-  {
+  // Находим работу Елены Смирновой
+  MOCK_ARTWORKS.find(artwork => artwork.artistId === '3') || {
     id: '3',
     title: 'Портрет незнакомки',
     description: 'Портрет девушки, выполненный маслом на холсте',
@@ -175,7 +175,7 @@ export default function HomeScreen() {
       <FlatList
         data={MOCK_TRENDING_ARTWORKS}
         renderItem={renderArtworkItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => `home-trending-${item.id}`}
         ListHeaderComponent={renderHeader}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}

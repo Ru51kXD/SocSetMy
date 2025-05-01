@@ -42,32 +42,32 @@ export function FeaturedArtists({ artists }: FeaturedArtistsProps) {
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText style={styles.sectionTitle}>Популярные художники</ThemedText>
-      
+      <ThemedText style={styles.title}>Популярные художники</ThemedText>
       <FlatList
-        horizontal
         data={artists}
         renderItem={renderArtistItem}
-        keyExtractor={(item) => item.id}
+        horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-        decelerationRate="fast"
+        keyExtractor={(item) => `featured-artist-${item.id}`}
+        contentContainerStyle={styles.listContent}
       />
     </ThemedView>
   );
 }
 
+export default FeaturedArtists;
+
 const styles = StyleSheet.create({
   container: {
     marginVertical: 16,
   },
-  sectionTitle: {
+  title: {
     fontSize: 20,
     fontWeight: 'bold',
     marginHorizontal: 16,
     marginBottom: 12,
   },
-  scrollContent: {
+  listContent: {
     paddingHorizontal: 12,
     paddingBottom: 4,
   },

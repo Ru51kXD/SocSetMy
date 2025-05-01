@@ -28,7 +28,7 @@ export function GalleryGrid({
     <FlatList
       data={artworks}
       renderItem={renderItem}
-      keyExtractor={(item) => item.id}
+      keyExtractor={(item) => `gallery-grid-${item.id}`}
       numColumns={numColumns}
       contentContainerStyle={styles.container}
       showsVerticalScrollIndicator={false}
@@ -38,6 +38,8 @@ export function GalleryGrid({
     />
   );
 }
+
+export default GalleryGrid;
 
 const styles = StyleSheet.create({
   container: {

@@ -25,6 +25,9 @@ export function TrendingArtworks({ artworks }: TrendingArtworksProps) {
   );
 }
 
+// Добавляем экспорт по умолчанию
+export default TrendingArtworks;
+
 const styles = StyleSheet.create({
   container: {
     marginVertical: 16,

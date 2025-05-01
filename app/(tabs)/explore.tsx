@@ -7,39 +7,9 @@ import { ArtworkCard } from '@/app/components/common/ArtworkCard';
 import { CategoryList } from '@/app/components/common/CategoryList';
 import { User, Artwork, ArtCategory } from '@/app/models/types';
 import { useRouter } from 'expo-router';
+import { MOCK_CATEGORIES } from '@/app/data/categories';
 
 // Моковые данные для демонстрации
-const MOCK_CATEGORIES: ArtCategory[] = [
-  {
-    id: '1',
-    name: 'Живопись',
-    description: 'Традиционная живопись',
-    imageUrl: 'https://images.unsplash.com/photo-1579965342575-16428a7c8881',
-    artworkCount: 1250
-  },
-  {
-    id: '2',
-    name: 'Графика',
-    description: 'Рисунки и графические работы',
-    imageUrl: 'https://images.unsplash.com/photo-1452802447250-470a88ac82bc',
-    artworkCount: 982
-  },
-  {
-    id: '3',
-    name: 'Цифровое искусство',
-    description: 'Цифровые иллюстрации',
-    imageUrl: 'https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d',
-    artworkCount: 1563
-  },
-  {
-    id: '4',
-    name: 'Скульптура',
-    description: 'Скульптурные произведения',
-    imageUrl: 'https://images.unsplash.com/photo-1544413164-5f1b295eb435',
-    artworkCount: 458
-  }
-];
-
 const MOCK_ARTISTS: User[] = [
   {
     id: '1',
@@ -205,7 +175,7 @@ export default function ExploreScreen() {
   const renderCategoryItem = ({ item }: { item: ArtCategory }) => (
     <TouchableOpacity 
       style={styles.categoryItem}
-      onPress={() => {/* Навигация на страницу категории */}}
+      onPress={() => router.push(`/category/${item.id}`)}
     >
       <Image source={{ uri: item.imageUrl }} style={styles.categoryImage} />
       <ThemedView style={styles.categoryInfo}>
@@ -221,10 +191,9 @@ export default function ExploreScreen() {
         horizontal
         data={MOCK_CATEGORIES}
         renderItem={renderCategoryItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => `explore-category-${item.id}`}
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.horizontalListContent}
-        style={styles.horizontalList}
+        contentContainerStyle={styles.categoriesList}
       />
       
       <ThemedView style={styles.section}>
@@ -232,7 +201,7 @@ export default function ExploreScreen() {
         <FlatList
           data={POPULAR_TAGS}
           renderItem={renderPopularTagItem}
-          keyExtractor={(item) => item}
+          keyExtractor={(item) => `explore-tag-${item}`}
           numColumns={3}
           contentContainerStyle={styles.tagsGridContent}
           scrollEnabled={false}
@@ -263,7 +232,7 @@ export default function ExploreScreen() {
         <FlatList
           data={MOCK_ARTWORKS}
           renderItem={({ item }) => <ArtworkCard artwork={item} compact={false} />}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => `explore-painting-${item.id}`}
           contentContainerStyle={styles.searchResults}
         />
       );
@@ -274,7 +243,7 @@ export default function ExploreScreen() {
         <FlatList
           data={MOCK_ARTISTS}
           renderItem={renderArtistItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => `explore-artist-${item.id}`}
           contentContainerStyle={styles.searchResults}
         />
       );
@@ -285,7 +254,7 @@ export default function ExploreScreen() {
         <FlatList
           data={POPULAR_TAGS}
           renderItem={renderTagItem}
-          keyExtractor={(item) => item}
+          keyExtractor={(item) => `explore-tag-${item}`}
           contentContainerStyle={styles.searchResults}
         />
       );
@@ -576,5 +545,14 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     color: '#888',
+  },
+  categoriesList: {
+    paddingHorizontal: 16,
+  },
+  tagsList: {
+    paddingHorizontal: 16,
+  },
+  artworksList: {
+    paddingHorizontal: 16,
   },
 });
