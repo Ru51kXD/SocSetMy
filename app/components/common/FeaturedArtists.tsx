@@ -31,9 +31,9 @@ export function FeaturedArtists({ artists }: FeaturedArtistsProps) {
       <ThemedText style={styles.artistStats}>{item.followers} подписчиков</ThemedText>
       
       <View style={styles.tagContainer}>
-        {item.artStyle && item.artStyle.split(',').slice(0, 1).map((style, index) => (
+        {item.artStyles && item.artStyles.slice(0, 1).map((style, index) => (
           <View key={index} style={styles.tag}>
-            <ThemedText style={styles.tagText}>{style.trim()}</ThemedText>
+            <ThemedText style={styles.tagText}>{style}</ThemedText>
           </View>
         ))}
       </View>

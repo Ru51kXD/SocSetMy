@@ -6,6 +6,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { ArtworkCard } from '@/app/components/common/ArtworkCard';
 import { CategoryList } from '@/app/components/common/CategoryList';
 import { User, Artwork, ArtCategory } from '@/app/models/types';
+import { useRouter } from 'expo-router';
 
 // Моковые данные для демонстрации
 const MOCK_CATEGORIES: ArtCategory[] = [
@@ -42,44 +43,48 @@ const MOCK_CATEGORIES: ArtCategory[] = [
 const MOCK_ARTISTS: User[] = [
   {
     id: '1',
-    username: 'artmaster',
-    displayName: 'Михаил Лебедев',
-    bio: 'Художник-иллюстратор из Санкт-Петербурга',
-    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d',
-    artStyles: ['Акварель', 'Скетчинг'],
-    skills: ['Портрет', 'Пейзаж'],
-    location: 'Санкт-Петербург',
+    username: 'marina_art',
+    displayName: 'Марина Иванова',
+    bio: 'Цифровой художник, специализирующийся на фэнтези',
+    avatar: 'https://i.pravatar.cc/150?img=36',
+    artStyles: ['Акварель', 'Иллюстрация'],
+    skills: ['Иллюстрация', 'Концепт-арт'],
+    location: 'Москва',
+    socialLinks: {},
     isVerified: true,
-    followers: 1250,
-    following: 145,
-    createdAt: '2023-01-15'
+    followers: 12500,
+    following: 230,
+    createdAt: '2022-03-15'
   },
   {
     id: '2',
-    username: 'colorexpert',
-    displayName: 'Анна Соколова',
-    bio: 'Цифровой художник',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb',
-    artStyles: ['Диджитал Арт'],
-    skills: ['Концепт-арт', 'Персонажный дизайн'],
+    username: 'alex_create',
+    displayName: 'Алексей Петров',
+    bio: 'Скульптор и художник',
+    avatar: 'https://i.pravatar.cc/150?img=12',
+    artStyles: ['Скульптура', 'Живопись'],
+    skills: ['Скульптура', 'Живопись маслом'],
+    location: 'Санкт-Петербург',
+    socialLinks: {},
     isVerified: true,
-    followers: 3400,
-    following: 210,
-    createdAt: '2022-08-22'
+    followers: 8300,
+    following: 145,
+    createdAt: '2022-06-22'
   },
   {
     id: '3',
-    username: 'sculptor',
-    displayName: 'Алексей Иванов',
-    bio: 'Скульптор, работаю с глиной и металлом',
-    avatar: 'https://images.unsplash.com/photo-1504257432389-52343af06ae3',
-    artStyles: ['Скульптура'],
-    skills: ['Керамика', 'Металл'],
-    location: 'Москва',
+    username: 'elena_draws',
+    displayName: 'Елена Смирнова',
+    bio: 'Создаю иллюстрации и концепт-арт',
+    avatar: 'https://i.pravatar.cc/150?img=25',
+    artStyles: ['Концепт-арт', 'Диджитал'],
+    skills: ['Цифровая иллюстрация', 'Скетчи'],
+    location: 'Казань',
+    socialLinks: {},
     isVerified: false,
-    followers: 890,
-    following: 132,
-    createdAt: '2021-11-05'
+    followers: 5100,
+    following: 92,
+    createdAt: '2023-01-10'
   }
 ];
 
@@ -133,6 +138,7 @@ export default function ExploreScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<SearchTab>('artworks');
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
   
   // Имитация поиска с загрузкой
   const handleSearch = useCallback((query: string) => {
@@ -147,7 +153,10 @@ export default function ExploreScreen() {
   }, []);
   
   const renderArtistItem = ({ item }: { item: User }) => (
-    <TouchableOpacity style={styles.artistCard}>
+    <TouchableOpacity 
+      style={styles.artistCard}
+      onPress={() => router.push(`/profile/${item.id}`)}
+    >
       <Image source={{ uri: item.avatar }} style={styles.artistAvatar} />
       <View style={styles.artistInfo}>
         <View style={styles.artistNameRow}>
@@ -168,7 +177,12 @@ export default function ExploreScreen() {
           )}
         </View>
       </View>
-      <TouchableOpacity style={styles.followButton}>
+      <TouchableOpacity 
+        style={styles.followButton}
+        onPress={(e) => {
+          e.stopPropagation(); // Предотвращаем распространение события нажатия
+        }}
+      >
         <ThemedText style={styles.followButtonText}>Подписаться</ThemedText>
       </TouchableOpacity>
     </TouchableOpacity>
