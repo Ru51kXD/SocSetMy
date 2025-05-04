@@ -30,116 +30,202 @@ const removeDuplicateThreads = (threads: MessageThread[]): MessageThread[] => {
 
 // Очищаем дубликаты в начальных данных
 const initialThreads: MessageThread[] = removeDuplicateThreads([
+  // Марина Иванова (ID=1)
   {
-    id: '1',
+    id: 'thread-artist-1',
     artist: {
-      id: '2',
+      id: '1',
       username: 'marina_art',
       displayName: 'Марина Иванова',
       avatar: 'https://i.pravatar.cc/150?img=36',
-      bio: 'Современный художник, работающий в стиле абстрактного экспрессионизма.',
-      artStyles: ['Абстракция'],
-      followers: 2340,
-      following: 128,
-      createdAt: '2021-06-10',
-      socialLinks: {}
+      bio: 'Цифровой художник, специализирующийся на фэнтези. Создаю иллюстрации для книг и игр.',
+      artStyles: ['Цифровое искусство', 'Иллюстрация'],
+      followers: 1250,
+      following: 230,
+      createdAt: '2022-03-15',
+      socialLinks: {
+        instagram: 'marina_art',
+        behance: 'marina_ivanova'
+      }
     },
     messages: [
       {
-        id: '1-1',
-        senderId: 'current-user',
-        receiverId: '2',
-        content: 'Здравствуйте! Интересует ваша работа "Абстрактная композиция #5". Она все ещё доступна для покупки?',
-        timestamp: '2023-07-15T12:30:00',
-        isRead: true,
-        subject: 'Вопрос о картине "Абстрактная композиция #5"'
-      },
+        id: 'welcome-marina-1',
+        senderId: '1',
+        receiverId: 'current-user',
+        content: 'Здравствуйте! Спасибо за интерес к моим работам. Вы можете написать мне о заказе или задать вопрос о любой работе.',
+        timestamp: new Date().toISOString(),
+        isRead: true
+      }
+    ],
+    lastMessage: 'Здравствуйте! Спасибо за интерес к моим работам. Вы можете написать мне о заказе или задать вопрос о любой работе.',
+    unread: false,
+    date: new Date().toISOString()
+  },
+  
+  // Алексей Петров (ID=2)
+  {
+    id: 'thread-artist-2',
+    artist: {
+      id: '2',
+      username: 'alex_create',
+      displayName: 'Алексей Петров',
+      avatar: 'https://i.pravatar.cc/150?img=12',
+      bio: 'Скульптор и художник. Работаю с разными материалами - от мрамора до дерева.',
+      artStyles: ['Скульптура', 'Живопись'],
+      followers: 8300,
+      following: 145,
+      createdAt: '2022-06-22',
+      socialLinks: {
+        instagram: 'alex_sculptor',
+        behance: 'alex_petrov'
+      }
+    },
+    messages: [
       {
-        id: '1-2',
+        id: 'welcome-alex-1',
         senderId: '2',
         receiverId: 'current-user',
-        content: 'Да, эта работа доступна для покупки. Могу предложить доставку по всей России.',
-        timestamp: '2023-07-15T14:30:00',
-        isRead: false
+        content: 'Приветствую! Рад, что вас заинтересовали мои работы. Какие именно вас интересуют?',
+        timestamp: new Date().toISOString(),
+        isRead: true
       }
     ],
-    lastMessage: 'Да, эта работа доступна для покупки. Могу предложить доставку по всей России.',
-    unread: true,
-    date: '2023-07-15T14:30:00'
+    lastMessage: 'Приветствую! Рад, что вас заинтересовали мои работы. Какие именно вас интересуют?',
+    unread: false,
+    date: new Date().toISOString()
   },
+  
+  // Елена Смирнова (ID=3)
   {
-    id: '2',
+    id: 'thread-artist-3',
     artist: {
       id: '3',
-      username: 'elena_sketch',
+      username: 'elena_draws',
       displayName: 'Елена Смирнова',
       avatar: 'https://i.pravatar.cc/150?img=25',
-      bio: 'Художник-иллюстратор. Рисую для книг, журналов и рекламы.',
-      artStyles: ['Иллюстрация'],
-      followers: 1560,
-      following: 312,
-      createdAt: '2022-02-15',
-      socialLinks: {}
+      bio: 'Создаю иллюстрации и концепт-арт. Специализируюсь на персонажном дизайне и фэнтези-иллюстрациях.',
+      artStyles: ['Концепт-арт', 'Диджитал'],
+      followers: 5100,
+      following: 92,
+      createdAt: '2023-01-10',
+      socialLinks: {
+        instagram: 'elena_artwork',
+        artstation: 'elena_smirnova'
+      }
     },
     messages: [
       {
-        id: '2-1',
-        senderId: 'current-user',
-        receiverId: '3',
-        content: 'Добрый день! Рассматриваю возможность заказа иллюстраций для детской книги. Какие у вас расценки?',
-        timestamp: '2023-07-12T09:15:00',
-        isRead: true,
-        subject: 'Заказ иллюстраций для детской книги'
-      },
-      {
-        id: '2-2',
+        id: 'welcome-elena-1',
         senderId: '3',
         receiverId: 'current-user',
-        content: 'Спасибо за интерес к моим работам! Какие именно иллюстрации вас заинтересовали?',
-        timestamp: '2023-07-12T10:15:00',
+        content: 'Добрый день! Благодарю за проявленный интерес к моим работам. Буду рада обсудить возможные проекты или ответить на ваши вопросы.',
+        timestamp: new Date().toISOString(),
         isRead: true
       }
     ],
-    lastMessage: 'Спасибо за интерес к моим работам! Какие именно иллюстрации вас заинтересовали?',
+    lastMessage: 'Добрый день! Благодарю за проявленный интерес к моим работам. Буду рада обсудить возможные проекты или ответить на ваши вопросы.',
     unread: false,
-    date: '2023-07-12T10:15:00'
+    date: new Date().toISOString()
   },
+  
+  // Михаил Лебедев (ID=4)
   {
-    id: '3',
+    id: 'thread-artist-4',
     artist: {
-      id: '6',
-      username: 'alex_art',
-      displayName: 'Алексей Иванов',
-      avatar: 'https://images.unsplash.com/photo-1504257432389-52343af06ae3',
-      bio: 'Скульптор, работаю с металлом и камнем.',
-      artStyles: ['Скульптура'],
-      followers: 980,
-      following: 210,
-      createdAt: '2022-04-15',
-      socialLinks: {}
+      id: '4',
+      username: 'artmaster',
+      displayName: 'Михаил Лебедев',
+      avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d',
+      bio: 'Художник-иллюстратор из Санкт-Петербурга. Специализируюсь на акварельных пейзажах и цифровых иллюстрациях.',
+      artStyles: ['Акварель', 'Скетчинг'],
+      followers: 1250,
+      following: 145,
+      createdAt: '2023-01-15',
+      socialLinks: {
+        instagram: 'artmaster',
+        behance: 'mikhail_lebedev'
+      }
     },
     messages: [
       {
-        id: '3-1',
-        senderId: 'current-user',
-        receiverId: '6',
-        content: 'Здравствуйте! Мне очень понравилась ваша работа "Динамика". Возможно ли заказать что-то подобное, но меньшего размера?',
-        timestamp: '2023-07-05T15:20:00',
-        isRead: true,
-        subject: 'Заказ скульптуры "Динамика"'
-      },
-      {
-        id: '3-2',
-        senderId: '6',
+        id: 'welcome-mikhail-1',
+        senderId: '4',
         receiverId: 'current-user',
-        content: 'Возможно изготовление на заказ по вашим размерам. Для этого потребуется около 3 недель.',
-        timestamp: '2023-07-05T18:45:00',
+        content: 'Здравствуйте! Очень рад нашему знакомству. Если вас заинтересовали мои акварельные работы, буду рад рассказать подробнее о техниках и материалах.',
+        timestamp: new Date().toISOString(),
         isRead: true
       }
     ],
-    lastMessage: 'Возможно изготовление на заказ по вашим размерам. Для этого потребуется около 3 недель.',
+    lastMessage: 'Здравствуйте! Очень рад нашему знакомству. Если вас заинтересовали мои акварельные работы, буду рад рассказать подробнее о техниках и материалах.',
     unread: false,
-    date: '2023-07-05T18:45:00'
+    date: new Date().toISOString()
+  },
+  
+  // Анна Соколова (ID=5)
+  {
+    id: 'thread-artist-5',
+    artist: {
+      id: '5',
+      username: 'colorexpert',
+      displayName: 'Анна Соколова',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb',
+      bio: 'Цифровой художник и иллюстратор. Создаю концепт-арты для игр и анимационных проектов.',
+      artStyles: ['Диджитал Арт'],
+      followers: 3400,
+      following: 210,
+      createdAt: '2022-08-22',
+      socialLinks: {
+        instagram: 'anna_digital',
+        artstation: 'anna_sokolova'
+      }
+    },
+    messages: [
+      {
+        id: 'welcome-anna-1',
+        senderId: '5',
+        receiverId: 'current-user',
+        content: 'Привет! Спасибо, что заинтересовались моими работами. Я специализируюсь на цифровом искусстве для игр и анимации. С удовольствием отвечу на любые вопросы!',
+        timestamp: new Date().toISOString(),
+        isRead: true
+      }
+    ],
+    lastMessage: 'Привет! Спасибо, что заинтересовались моими работами. Я специализируюсь на цифровом искусстве для игр и анимации. С удовольствием отвечу на любые вопросы!',
+    unread: false,
+    date: new Date().toISOString()
+  },
+  
+  // Алексей Иванов (ID=6)
+  {
+    id: 'thread-artist-6',
+    artist: {
+      id: '6',
+      username: 'sculptor',
+      displayName: 'Алексей Иванов',
+      avatar: 'https://images.unsplash.com/photo-1504257432389-52343af06ae3',
+      bio: 'Скульптор, работаю с глиной и металлом. Создаю как монументальные работы, так и миниатюры.',
+      artStyles: ['Скульптура'],
+      followers: 890,
+      following: 132,
+      createdAt: '2021-11-05',
+      socialLinks: {
+        instagram: 'alex_sculptor',
+        behance: 'alexey_ivanov'
+      }
+    },
+    messages: [
+      {
+        id: 'welcome-alexey-1',
+        senderId: '6',
+        receiverId: 'current-user',
+        content: 'Здравствуйте! Рад, что вас заинтересовали мои скульптуры. Если у вас есть вопросы о моих работах или вы хотите обсудить возможный заказ, пишите в любое время.',
+        timestamp: new Date().toISOString(),
+        isRead: true
+      }
+    ],
+    lastMessage: 'Здравствуйте! Рад, что вас заинтересовали мои скульптуры. Если у вас есть вопросы о моих работах или вы хотите обсудить возможный заказ, пишите в любое время.',
+    unread: false,
+    date: new Date().toISOString()
   }
 ]);
 
@@ -222,16 +308,46 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Функция для получения потока сообщений по ID художника
   const getThreadByArtistId = (artistId: string) => {
-    // Преобразуем ID в строку для гарантированного сравнения
+    if (!artistId) {
+      console.error("Ошибка: artistId не определен в getThreadByArtistId");
+      return undefined;
+    }
+    
+    // Преобразуем ID в строку для корректного сравнения
     const targetId = String(artistId);
-    return threads.find(thread => String(thread.artist.id) === targetId);
+    console.log(`Поиск потока для художника ID=${targetId}`);
+    
+    // Для Марины Ивановой (ID=1) логируем дополнительно
+    if (targetId === '1') {
+      console.log('Ищем поток с Мариной Ивановой (ID=1)');
+      console.log('Доступные потоки:', threads.map(t => ({ id: t.id, artistId: t.artist.id })));
+    }
+    
+    // Ищем поток, где artistId совпадает с целевым
+    const thread = threads.find(t => String(t.artist.id) === targetId);
+    
+    if (thread) {
+      console.log(`Найден поток: ${thread.id}`);
+    } else {
+      console.log(`Поток для художника ID=${targetId} не найден`);
+    }
+    
+    return thread;
   };
 
   // Функция для добавления нового сообщения
   const addMessage = (artistId: string, messageData: Partial<Message>) => {
+    console.log('Вызвана функция addMessage для художника ID:', artistId);
+    
     const timestamp = new Date().toISOString();
     // Преобразуем ID в строку для гарантированного сравнения
     const targetId = String(artistId);
+    
+    // Для Марины Ивановой выводим дополнительный лог
+    if (targetId === '1') {
+      console.log('Добавление сообщения для Марины Ивановой (ID=1)');
+      console.log('Текущие потоки:', threads.map(t => ({ id: t.id, artistId: t.artist.id })));
+    }
     
     // Генерируем уникальный идентификатор для сообщения
     const uniqueId = `message-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -250,8 +366,10 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setThreads(prevThreads => {
       // Ищем существующий поток сообщений с художником
       const existingThreadIndex = prevThreads.findIndex(thread => String(thread.artist.id) === targetId);
+      console.log('Найден поток с индексом:', existingThreadIndex);
 
       if (existingThreadIndex >= 0) {
+        console.log('Обновляем существующий поток для художника ID:', targetId);
         // Обновляем существующий поток
         const updatedThreads = [...prevThreads];
         const thread = { ...updatedThreads[existingThreadIndex] };
@@ -264,6 +382,38 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
         updatedThreads[existingThreadIndex] = thread;
         return updatedThreads;
       } else {
+        console.log('Создаем новый поток для художника ID:', targetId);
+        
+        // Специальная обработка для Марины Ивановой (ID=1)
+        if (targetId === '1') {
+          console.log('Создаем новый поток для Марины Ивановой (ID=1)');
+          
+          const marinaUser: User = {
+            id: '1',
+            username: 'marina_art',
+            displayName: 'Марина Иванова',
+            avatar: 'https://i.pravatar.cc/150?img=36',
+            bio: 'Цифровой художник, специализирующийся на фэнтези',
+            artStyles: ['Цифровое искусство', 'Фэнтези'],
+            followers: 1250,
+            following: 230,
+            createdAt: '2022-03-15',
+            socialLinks: {}
+          };
+          
+          const newThread: MessageThread = {
+            id: 'thread-artist-1',
+            artist: marinaUser,
+            messages: [newMessage],
+            lastMessage: newMessage.content,
+            unread: newMessage.senderId !== 'current-user',
+            date: timestamp
+          };
+          
+          console.log('Создан новый поток для Марины Ивановой с ID:', newThread.id);
+          return removeDuplicateThreads([...prevThreads, newThread]);
+        }
+        
         // Создаем новый поток сообщений
         const artwork = MOCK_ARTWORKS.find(artwork => String(artwork.artistId) === targetId);
         
@@ -323,15 +473,91 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
   };
 
+  // Специальная функция для создания чата с Мариной Ивановой
+  const createMarinaChat = (artwork: Artwork) => {
+    console.log('Принудительное создание чата с Мариной Ивановой (ID=1)');
+    
+    const timestamp = new Date().toISOString();
+    const uniqueId = `message-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Создаем сообщение
+    const newMessage: Message = {
+      id: uniqueId,
+      senderId: 'current-user',
+      receiverId: '1',
+      content: `Я хочу поделиться с вами работой "${artwork.title}"`,
+      timestamp,
+      isRead: false,
+      sharedArtwork: artwork
+    };
+    
+    // Создаем объект пользователя Марины Ивановой
+    const marinaUser: User = {
+      id: '1',
+      username: 'marina_art',
+      displayName: 'Марина Иванова',
+      avatar: 'https://i.pravatar.cc/150?img=36',
+      bio: 'Цифровой художник, специализирующийся на фэнтези',
+      artStyles: ['Цифровое искусство', 'Фэнтези'],
+      followers: 1250,
+      following: 230,
+      createdAt: '2023-01-01',
+      socialLinks: {}
+    };
+    
+    // Создаем новый поток для Марины
+    const newThread: MessageThread = {
+      id: 'thread-artist-1',
+      artist: marinaUser,
+      messages: [newMessage],
+      lastMessage: `Работа: ${artwork.title} • Марина Иванова`,
+      unread: false,
+      date: timestamp
+    };
+    
+    console.log('Создан новый поток для Марины Ивановой:', newThread.id);
+    
+    // Обновляем состояние потоков
+    setThreads(prevThreads => {
+      // Удаляем существующий поток с Мариной Ивановой, если есть
+      const filteredThreads = prevThreads.filter(thread => String(thread.artist.id) !== '1');
+      // Добавляем новый поток
+      return removeDuplicateThreads([...filteredThreads, newThread]);
+    });
+    
+    // Устанавливаем активный чат
+    setActiveChat('1');
+    
+    return newThread;
+  };
+
   // Функция для отправки сообщения с постом
   const shareArtwork = (artistId: string, artwork: Artwork) => {
+    console.log('Вызвана функция shareArtwork с параметрами:', { artistId, artworkId: artwork?.id });
+    
+    if (!artwork) {
+      console.error('Ошибка: artwork не определен');
+      return;
+    }
+    
     // Преобразуем ID в строку для гарантированного сравнения
     const targetId = String(artistId);
+    console.log('Целевой ID художника:', targetId);
+    
+    // Особая обработка для Марины Ивановой (ID=1)
+    if (targetId === '1') {
+      console.log('Особый случай: Марина Иванова (ID=1), используем createMarinaChat');
+      return createMarinaChat(artwork);
+    }
+    
+    // Для остальных художников - стандартная логика
     
     // Проверяем, существует ли уже чат с этим художником
     const existingThread = getThreadByArtistId(targetId);
+    console.log('Существующий поток:', existingThread ? 'найден' : 'не найден');
     
     if (existingThread) {
+      console.log('Добавляем сообщение в существующий поток:', existingThread.id);
       // Если чат существует, добавляем сообщение с произведением
       addMessage(targetId, {
         content: `Я хочу поделиться с вами работой "${artwork.title}"`,
@@ -340,6 +566,7 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return;
     }
     
+    console.log('Создаем новый поток чата для художника:', targetId);
     // Если чата нет, создаем новый
     const timestamp = new Date().toISOString();
     const uniqueId = `message-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -356,12 +583,49 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     setThreads(prevThreads => {
       // Создаем новый поток сообщений
+      // Ищем художника в MOCK_ARTWORKS
       const artistData = MOCK_ARTWORKS.find(a => String(a.artistId) === targetId);
       
+      // Для Марины Ивановой делаем дополнительную проверку
+      if (targetId === '1' && !artistData) {
+        console.log('Особая обработка для Марины Ивановой');
+        // Используем первую работу, так как знаем, что она Марины Ивановой
+        const firstArtwork = MOCK_ARTWORKS.find(a => a.artistName.includes('Марина'));
+        
+        if (firstArtwork) {
+          const marinaUser: User = {
+            id: '1',
+            username: 'marina_art',
+            displayName: 'Марина Иванова',
+            avatar: firstArtwork.artistAvatar || 'https://i.pravatar.cc/150?img=36',
+            bio: 'Цифровой художник, специализирующийся на фэнтези',
+            artStyles: ['Цифровое искусство', 'Фэнтези'],
+            followers: 1250,
+            following: 230,
+            createdAt: '2023-01-01',
+            socialLinks: {}
+          };
+          
+          const newThread: MessageThread = {
+            id: `thread-artist-1`,
+            artist: marinaUser,
+            messages: [newMessage],
+            lastMessage: `Работа: ${artwork.title} • Марина Иванова`,
+            unread: false,
+            date: timestamp
+          };
+          
+          console.log('Создан новый поток для Марины Ивановой:', newThread.id);
+          return removeDuplicateThreads([...prevThreads, newThread]);
+        }
+      }
+      
       if (!artistData) {
-        console.error(`Художник с ID ${targetId} не найден`);
+        console.error(`Художник с ID ${targetId} не найден в MOCK_ARTWORKS`);
         return prevThreads;
       }
+      
+      console.log('Найдены данные художника:', artistData.artistName);
       
       // Создаем объект художника из данных работы
       const artistUser: User = {
@@ -386,17 +650,43 @@ export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ child
         date: timestamp
       };
       
+      console.log('Создан новый поток:', newThread.id);
       // Возвращаем массив без дубликатов
       return removeDuplicateThreads([...prevThreads, newThread]);
     });
+    
+    console.log('Функция shareArtwork завершена');
   };
 
   // Функция для проверки существования чата
   const hasThreadWithArtist = (artistId: string) => {
+    if (!artistId) {
+      console.error("Ошибка: artistId не определен в hasThreadWithArtist");
+      return false;
+    }
+    
     // Убедимся, что ID преобразован в строку для корректного сравнения
     const targetId = String(artistId);
+    console.log(`Проверка наличия чата с художником ID=${targetId}`);
+    
+    // Для Марины Ивановой выводим дополнительную информацию
+    if (targetId === '1') {
+      console.log('Проверяем чат с Мариной Ивановой (ID=1)');
+      console.log('Текущие потоки:', threads.map(t => ({ id: t.id, artistId: t.artist.id })));
+    }
+    
     // Используем some для поиска хотя бы одного совпадения
-    return threads.some(thread => String(thread.artist.id) === targetId);
+    const hasThread = threads.some(thread => {
+      const threadArtistId = String(thread.artist.id);
+      const match = threadArtistId === targetId;
+      if (targetId === '1') {
+        console.log(`Сравнение ${threadArtistId} === ${targetId}: ${match}`);
+      }
+      return match;
+    });
+    
+    console.log(`Результат проверки чата для ID=${targetId}: ${hasThread}`);
+    return hasThread;
   };
   
   // Функция для принудительной очистки дубликатов

@@ -310,7 +310,7 @@ export default function ArtistProfileScreen() {
   const [isContactModalVisible, setIsContactModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-  const { setActiveChat } = useMessages();
+  const { setActiveChat, hasThreadWithArtist, shareArtwork, addMessage } = useMessages();
   
   useEffect(() => {
     // Устанавливаем флаг загрузки
@@ -394,10 +394,27 @@ export default function ArtistProfileScreen() {
   };
 
   const handleMessage = () => {
-    // Вместо открытия модального окна сразу перенаправляем в чат
     if (artist) {
-      setActiveChat?.(artist.id);
-      router.push('/(tabs)/messages');
+      // Проверяем, существует ли уже чат с этим художником
+      if (hasThreadWithArtist?.(String(artist.id))) {
+        // Если чат существует, просто активируем его и переходим к нему
+        setActiveChat?.(String(artist.id));
+        router.push('/(tabs)/messages');
+      } else {
+        // Если чата еще нет, создаем новый чат с этим художником
+        // Берем первую работу художника, если есть, или просто инициируем чат без работы
+        if (artworks.length > 0) {
+          shareArtwork?.(String(artist.id), artworks[0]);
+        } else {
+          // Создаем обычное сообщение без прикрепленной работы
+          addMessage?.(String(artist.id), {
+            content: `Здравствуйте, ${artist.displayName}! Хотел бы обсудить с вами сотрудничество.`,
+            subject: 'Сотрудничество'
+          });
+        }
+        setActiveChat?.(String(artist.id));
+        router.push('/(tabs)/messages');
+      }
     }
   };
   

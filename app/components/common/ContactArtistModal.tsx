@@ -52,30 +52,14 @@ export function ContactArtistModal({ visible, artist, artwork, onClose }: Contac
     setTimeout(() => {
       setIsSending(false);
       
-      // Проверяем, существует ли уже чат с этим художником
-      if (hasThreadWithArtist(artistIdStr)) {
-        // Если чат уже существует, просто добавляем новое сообщение
-        addMessage(artistIdStr, {
-          content: messageData.trim(),
-          senderId: 'current-user',
-          receiverId: artistIdStr,
-          subject: subject.trim()
-        });
-      } else {
-        // Если чат ещё не существует
-        if (artwork) {
-          // Если есть произведение, отправляем его с помощью shareArtwork
-          shareArtwork(artistIdStr, artwork);
-        } else {
-          // Иначе просто создаём новый чат с сообщением
-          addMessage(artistIdStr, {
-            content: messageData.trim(),
-            senderId: 'current-user',
-            receiverId: artistIdStr,
-            subject: subject.trim()
-          });
-        }
-      }
+      // Добавляем сообщение в чат, функция addMessage сама создаст чат, если его не существует
+      addMessage(artistIdStr, {
+        content: messageData.trim(),
+        senderId: 'current-user',
+        receiverId: artistIdStr,
+        subject: subject.trim(),
+        ...(artwork ? { sharedArtwork: artwork } : {})
+      });
       
       // Очищаем поля ввода
       setMessageData('');
