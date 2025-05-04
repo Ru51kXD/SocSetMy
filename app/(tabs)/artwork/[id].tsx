@@ -8,6 +8,7 @@ import { Artwork, User } from '@/app/models/types';
 import { MOCK_ARTWORKS } from '@/app/data/artworks';
 import { ContactArtistModal } from '@/app/components/common/ContactArtistModal';
 import { useMessages } from '@/app/context/MessageContext';
+import { useUserPreferences } from '@/app/context/UserPreferencesContext';
 
 const { width } = Dimensions.get('window');
 
@@ -15,11 +16,21 @@ export default function ArtworkDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const [artwork, setArtwork] = useState<Artwork | null>(null);
-  const [isLiked, setIsLiked] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
   const [isContactModalVisible, setIsContactModalVisible] = useState(false);
   const [artist, setArtist] = useState<User | null>(null);
   const { setActiveChat, hasThreadWithArtist, shareArtwork, addMessage } = useMessages();
+  const { 
+    isArtworkLiked, 
+    isArtworkSaved, 
+    likeArtwork, 
+    unlikeArtwork, 
+    saveArtwork, 
+    unsaveArtwork 
+  } = useUserPreferences();
+  
+  // Состояние лайка и сохранения
+  const [isLiked, setIsLiked] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
     // Находим работу по ID из параметров URL
@@ -40,8 +51,14 @@ export default function ArtworkDetailScreen() {
         createdAt: '',
         socialLinks: {}
       });
+      
+      // Проверяем статус лайка и сохранения
+      if (foundArtwork.id) {
+        setIsLiked(isArtworkLiked(foundArtwork.id));
+        setIsSaved(isArtworkSaved(foundArtwork.id));
+      }
     }
-  }, [id]);
+  }, [id, isArtworkLiked, isArtworkSaved]);
 
   const handleArtistPress = () => {
     if (artwork) {
@@ -49,12 +66,36 @@ export default function ArtworkDetailScreen() {
     }
   };
 
-  const handleLikeToggle = () => {
-    setIsLiked(!isLiked);
+  const handleLikeToggle = async () => {
+    if (!artwork) return;
+    
+    try {
+      if (isLiked) {
+        await unlikeArtwork(artwork.id);
+        setIsLiked(false);
+      } else {
+        await likeArtwork(artwork);
+        setIsLiked(true);
+      }
+    } catch (error) {
+      console.error('Ошибка при обработке лайка:', error);
+    }
   };
 
-  const handleSaveToggle = () => {
-    setIsSaved(!isSaved);
+  const handleSaveToggle = async () => {
+    if (!artwork) return;
+    
+    try {
+      if (isSaved) {
+        await unsaveArtwork(artwork.id);
+        setIsSaved(false);
+      } else {
+        await saveArtwork(artwork);
+        setIsSaved(true);
+      }
+    } catch (error) {
+      console.error('Ошибка при сохранении в избранное:', error);
+    }
   };
 
   const handleContactArtist = () => {
@@ -155,15 +196,14 @@ export default function ArtworkDetailScreen() {
           </TouchableOpacity>
           
           <View style={styles.statsRow}>
-            <View style={styles.stat}>
+            <TouchableOpacity style={styles.stat} onPress={handleLikeToggle}>
               <FontAwesome 
                 name={isLiked ? "heart" : "heart-o"} 
                 size={18} 
                 color={isLiked ? "#FF4151" : "#666"} 
-                onPress={handleLikeToggle}
               />
               <ThemedText style={styles.statText}>{artwork.likes + (isLiked ? 1 : 0)}</ThemedText>
-            </View>
+            </TouchableOpacity>
             <View style={styles.stat}>
               <FontAwesome name="eye" size={18} color="#666" />
               <ThemedText style={styles.statText}>{artwork.views}</ThemedText>

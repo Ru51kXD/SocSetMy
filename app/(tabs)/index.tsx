@@ -1,10 +1,11 @@
 import React, { useState, useCallback } from 'react';
-import { StyleSheet, FlatList, View, RefreshControl } from 'react-native';
+import { StyleSheet, FlatList, View, RefreshControl, ScrollView } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { ArtworkCard } from '@/app/components/common/ArtworkCard';
 import { CategoryList } from '@/app/components/common/CategoryList';
 import { FeaturedArtists } from '@/app/components/common/FeaturedArtists';
+import { WeeklyTopArtworks } from '@/app/components/common/WeeklyTopArtworks';
 import { User, Artwork } from '@/app/models/types';
 import { MOCK_CATEGORIES } from '@/app/data/categories';
 import { MOCK_ARTWORKS } from '@/app/data/artworks';
@@ -136,49 +137,11 @@ export default function HomeScreen() {
     }, 1000);
   }, []);
 
-  // Компонент для рендеринга заголовка FlatList
-  const renderHeader = () => (
-    <>
-      <View style={styles.header}>
-        <ThemedText style={styles.greeting}>Добро пожаловать в</ThemedText>
-        <ThemedText style={styles.title}>Арт Сообщество</ThemedText>
-        <ThemedText style={styles.subtitle}>
-          Место, где художники делятся своими работами и идеями
-        </ThemedText>
-      </View>
-
-      <ThemedView style={styles.section}>
-        <ThemedText style={styles.sectionTitle}>Категории</ThemedText>
-      </ThemedView>
-      
-      <CategoryList categories={MOCK_CATEGORIES} horizontal={true} />
-      
-      <ThemedView style={styles.section}>
-        <ThemedText style={styles.sectionTitle}>Популярные художники</ThemedText>
-      </ThemedView>
-      
-      <FeaturedArtists artists={MOCK_FEATURED_ARTISTS} />
-      
-      <ThemedView style={styles.section}>
-        <ThemedText style={styles.sectionTitle}>Лучшие работы недели</ThemedText>
-      </ThemedView>
-    </>
-  );
-
-  // Функция для рендеринга элемента работы
-  const renderArtworkItem = ({ item }: { item: Artwork }) => (
-    <ArtworkCard artwork={item} compact={false} />
-  );
-
   return (
     <ThemedView style={styles.container}>
-      <FlatList
-        data={MOCK_TRENDING_ARTWORKS}
-        renderItem={renderArtworkItem}
-        keyExtractor={(item) => `home-trending-${item.id}`}
-        ListHeaderComponent={renderHeader}
-        contentContainerStyle={styles.contentContainer}
+      <ScrollView
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.contentContainer}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -187,7 +150,30 @@ export default function HomeScreen() {
             tintColor={'#0a7ea4'}
           />
         }
-      />
+      >
+        <View style={styles.header}>
+          <ThemedText style={styles.greeting}>Добро пожаловать в</ThemedText>
+          <ThemedText style={styles.title}>Арт Сообщество</ThemedText>
+          <ThemedText style={styles.subtitle}>
+            Место, где художники делятся своими работами и идеями
+          </ThemedText>
+        </View>
+
+        <ThemedView style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Категории</ThemedText>
+        </ThemedView>
+        
+        <CategoryList categories={MOCK_CATEGORIES} horizontal={true} />
+        
+        <ThemedView style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Популярные художники</ThemedText>
+        </ThemedView>
+        
+        <FeaturedArtists artists={MOCK_FEATURED_ARTISTS} />
+        
+        {/* Используем новый компонент для отображения лучших работ недели */}
+        <WeeklyTopArtworks artworks={MOCK_TRENDING_ARTWORKS} />
+      </ScrollView>
     </ThemedView>
   );
 }

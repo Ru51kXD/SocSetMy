@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Image, TouchableOpacity, Dimensions, Modal, FlatList, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
@@ -8,6 +8,7 @@ import { Artwork, User } from '@/app/models/types';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useMessages } from '@/app/context/MessageContext';
 import { MOCK_ARTWORKS } from '@/app/data/artworks';
+import { useUserPreferences } from '@/app/context/UserPreferencesContext';
 
 interface ArtworkCardProps {
   artwork: Artwork;
@@ -21,9 +22,12 @@ const cardWidth = width / 2 - 24; // Две карточки в ряду с уч
 export function ArtworkCard({ artwork, compact = false, onContactRequest }: ArtworkCardProps) {
   const router = useRouter();
   const { threads, shareArtwork, setActiveChat, hasThreadWithArtist, addMessage } = useMessages();
+  const { isArtworkLiked, isArtworkSaved, likeArtwork, unlikeArtwork, saveArtwork, unsaveArtwork } = useUserPreferences();
   const [isShareModalVisible, setIsShareModalVisible] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   // Получаем уникальных художников из существующих чатов
   const chatArtists = threads.map(thread => thread.artist);
@@ -33,6 +37,12 @@ export function ArtworkCard({ artwork, compact = false, onContactRequest }: Artw
   if (currentArtist && !chatArtists.some(artist => artist.id === currentArtist)) {
     // Если это текущий автор работы, его не добавляем в список для отправки
   }
+
+  // Проверяем статус лайка и сохранения при загрузке
+  useEffect(() => {
+    setLiked(isArtworkLiked(artwork.id));
+    setSaved(isArtworkSaved(artwork.id));
+  }, [artwork.id, isArtworkLiked, isArtworkSaved]);
 
   // Функция для отображения запасного изображения
   const getBackupImageUrl = () => {
@@ -164,6 +174,36 @@ export function ArtworkCard({ artwork, compact = false, onContactRequest }: Artw
     router.push('/(tabs)/messages');
   };
 
+  const handleLikeToggle = async (e: any) => {
+    e.stopPropagation();
+    try {
+      if (liked) {
+        await unlikeArtwork(artwork.id);
+        setLiked(false);
+      } else {
+        await likeArtwork(artwork);
+        setLiked(true);
+      }
+    } catch (error) {
+      console.error('Ошибка при обработке лайка:', error);
+    }
+  };
+
+  const handleSaveToggle = async (e: any) => {
+    e.stopPropagation();
+    try {
+      if (saved) {
+        await unsaveArtwork(artwork.id);
+        setSaved(false);
+      } else {
+        await saveArtwork(artwork);
+        setSaved(true);
+      }
+    } catch (error) {
+      console.error('Ошибка при сохранении в избранное:', error);
+    }
+  };
+
   const renderArtistItem = ({ item }: { item: User }) => (
     <TouchableOpacity 
       style={styles.artistItem} 
@@ -201,7 +241,11 @@ export function ArtworkCard({ artwork, compact = false, onContactRequest }: Artw
 
   return (
     <>
-      <TouchableOpacity style={styles.card} onPress={handlePress}>
+      <TouchableOpacity 
+        style={[styles.card, compact && styles.compactCard]} 
+        onPress={handlePress}
+        activeOpacity={0.8}
+      >
         <View style={styles.imageContainer}>
           {imageLoading && (
             <View style={[styles.image, styles.imagePlaceholder]}>
@@ -224,10 +268,14 @@ export function ArtworkCard({ artwork, compact = false, onContactRequest }: Artw
           </TouchableOpacity>
           
           <View style={styles.statsRow}>
-            <View style={styles.stat}>
-              <FontAwesome name="heart" size={14} color="#FF4151" />
-              <ThemedText style={styles.statText}>{artwork.likes}</ThemedText>
-            </View>
+            <TouchableOpacity style={styles.stat} onPress={handleLikeToggle}>
+              <FontAwesome 
+                name={liked ? "heart" : "heart-o"} 
+                size={14} 
+                color={liked ? "#FF4151" : "#888"} 
+              />
+              <ThemedText style={styles.statText}>{artwork.likes + (liked ? 1 : 0)}</ThemedText>
+            </TouchableOpacity>
             <View style={styles.stat}>
               <FontAwesome name="eye" size={14} color="#888" />
               <ThemedText style={styles.statText}>{artwork.views}</ThemedText>
@@ -236,6 +284,14 @@ export function ArtworkCard({ artwork, compact = false, onContactRequest }: Artw
               <FontAwesome name="comment" size={14} color="#888" />
               <ThemedText style={styles.statText}>{artwork.comments}</ThemedText>
             </View>
+            
+            <TouchableOpacity style={styles.stat} onPress={handleSaveToggle}>
+              <FontAwesome 
+                name={saved ? "bookmark" : "bookmark-o"} 
+                size={14} 
+                color={saved ? "#0a7ea4" : "#888"} 
+              />
+            </TouchableOpacity>
             
             <TouchableOpacity style={styles.shareButton} onPress={handleSharePress}>
               <FontAwesome name="share" size={14} color="#0a7ea4" />

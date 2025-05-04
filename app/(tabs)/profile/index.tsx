@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, TouchableOpacity, ScrollView, Text, Alert } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, ScrollView, Text, Alert, ActivityIndicator, FlatList } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ProfileHeader } from '@/app/components/common/ProfileHeader';
 import { GalleryGrid } from '@/app/components/gallery/GalleryGrid';
 import { EditProfileModal } from '@/app/components/common/EditProfileModal';
+import { ArtworkCard } from '@/app/components/common/ArtworkCard';
 import { User, Artwork } from '@/app/models/types';
 import { useAuth } from '@/app/context/AuthContext';
 import { useArtworks } from '@/app/context/ArtworkContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { UploadArtworkModal } from '@/app/components/artwork/UploadArtworkModal';
+import { useUserPreferences } from '@/app/context/UserPreferencesContext';
 
 // Моковые данные для сохраненных и понравившихся работ - эти данные будут использоваться только для демо
 const SAVED_ARTWORKS: Artwork[] = [
@@ -163,11 +165,13 @@ function EmptyState({ activeTab, onUpload }: { activeTab: TabType, onUpload?: ()
   );
 }
 
-type TabType = 'works' | 'saved' | 'liked';
+// Обновляем тип для вкладок профиля
+type TabType = 'works' | 'liked' | 'saved';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth(); // Получаем пользователя и функцию выхода из AuthContext
   const { userArtworks, isLoading: isLoadingArtworks } = useArtworks(); // Получаем работы пользователя из ArtworkContext
+  const { likedArtworks, savedArtworks, isLoading: isLoadingPreferences } = useUserPreferences(); // Получаем лайкнутые и сохраненные работы
   
   const [activeTab, setActiveTab] = useState<TabType>('works');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -230,43 +234,40 @@ export default function ProfileScreen() {
     // При необходимости здесь можно добавить дополнительную логику
   };
 
-  // Отображение содержимого активной вкладки
-  const renderTabContent = () => {
-    // Для вкладки работ используем данные из контекста
-    if (activeTab === 'works') {
-      // Проверяем, есть ли у пользователя работы
-      if (userArtworks.length === 0) {
-        return (
-          <EmptyState 
-            activeTab={activeTab} 
-            onUpload={handleOpenUploadModal} 
-          />
-        );
-      }
-      
-      return <GalleryGrid artworks={userArtworks} compact={true} />;
-    }
-    
-    // Для демо аккаунтов показываем моковые данные, для новых пользователей - пустое состояние
-    if (isNewUser) {
-      return <EmptyState activeTab={activeTab} />;
-    }
-    
+  // Функция для отображения произведений в зависимости от активной вкладки
+  const getActiveTabArtworks = () => {
     switch (activeTab) {
-      case 'saved':
-        return <GalleryGrid artworks={SAVED_ARTWORKS} compact={true} />;
+      case 'works':
+        return userArtworks;
       case 'liked':
-        return <GalleryGrid artworks={LIKED_ARTWORKS} compact={true} />;
+        return likedArtworks;
+      case 'saved':
+        return savedArtworks;
       default:
-        return null;
+        return userArtworks;
+    }
+  };
+
+  // Функция получения текста для пустого экрана
+  const getEmptyTabText = () => {
+    switch (activeTab) {
+      case 'works':
+        return 'У вас пока нет загруженных работ';
+      case 'liked':
+        return 'У вас пока нет работ, которые вам понравились';
+      case 'saved':
+        return 'У вас пока нет сохраненных работ';
+      default:
+        return 'Нет данных для отображения';
     }
   };
 
   // Если данные загружаются, показываем индикатор загрузки
-  if (isLoadingArtworks) {
+  if (isLoadingArtworks || isLoadingPreferences) {
     return (
       <View style={[styles.container, styles.loadingContainer]}>
-        <ThemedText>Загрузка...</ThemedText>
+        <ActivityIndicator size="large" color="#0a7ea4" />
+        <ThemedText style={styles.loadingText}>Загрузка работ...</ThemedText>
       </View>
     );
   }
@@ -286,58 +287,63 @@ export default function ProfileScreen() {
           <ThemedText style={styles.logoutText}>Выйти из аккаунта</ThemedText>
         </TouchableOpacity>
         
-        <View style={styles.tabContainer}>
+        {/* Вкладки профиля */}
+        <View style={styles.tabsContainer}>
           <TouchableOpacity
-            style={[styles.tabButton, activeTab === 'works' && styles.activeTab]}
+            style={[styles.tab, activeTab === 'works' && styles.activeTab]}
             onPress={() => setActiveTab('works')}
           >
-            <FontAwesome 
-              name="image" 
-              size={22}
-              color={activeTab === 'works' ? '#0a7ea4' : '#888'} 
-            />
-            <ThemedText 
-              style={[styles.tabText, activeTab === 'works' && styles.activeTabText]}
-            >
+            <ThemedText style={[styles.tabText, activeTab === 'works' && styles.activeTabText]}>
               Работы
             </ThemedText>
           </TouchableOpacity>
           
           <TouchableOpacity
-            style={[styles.tabButton, activeTab === 'saved' && styles.activeTab]}
-            onPress={() => setActiveTab('saved')}
+            style={[styles.tab, activeTab === 'liked' && styles.activeTab]}
+            onPress={() => setActiveTab('liked')}
           >
-            <FontAwesome 
-              name="bookmark" 
-              size={22} 
-              color={activeTab === 'saved' ? '#0a7ea4' : '#888'} 
-            />
-            <ThemedText 
-              style={[styles.tabText, activeTab === 'saved' && styles.activeTabText]}
-            >
-              Сохраненные
+            <ThemedText style={[styles.tabText, activeTab === 'liked' && styles.activeTabText]}>
+              Понравившиеся
             </ThemedText>
           </TouchableOpacity>
           
           <TouchableOpacity
-            style={[styles.tabButton, activeTab === 'liked' && styles.activeTab]}
-            onPress={() => setActiveTab('liked')}
+            style={[styles.tab, activeTab === 'saved' && styles.activeTab]}
+            onPress={() => setActiveTab('saved')}
           >
-            <FontAwesome 
-              name="heart" 
-              size={22} 
-              color={activeTab === 'liked' ? '#0a7ea4' : '#888'} 
-            />
-            <ThemedText 
-              style={[styles.tabText, activeTab === 'liked' && styles.activeTabText]}
-            >
-              Понравившиеся
+            <ThemedText style={[styles.tabText, activeTab === 'saved' && styles.activeTabText]}>
+              Сохраненные
             </ThemedText>
           </TouchableOpacity>
         </View>
         
+        {/* Отображение работ выбранной вкладки */}
         <View style={styles.contentContainer}>
-          {renderTabContent()}
+          {getActiveTabArtworks().length > 0 ? (
+            <View style={styles.artworksGrid}>
+              {getActiveTabArtworks().map(item => (
+                <View 
+                  key={`${activeTab}-artwork-${item.id}`}
+                  style={styles.artworkItem}
+                >
+                  <ArtworkCard artwork={item} compact />
+                </View>
+              ))}
+            </View>
+          ) : (
+            <View style={styles.emptyStateContainer}>
+              <FontAwesome name="image" size={64} color="#ccc" />
+              <ThemedText style={styles.emptyStateText}>{getEmptyTabText()}</ThemedText>
+              {activeTab === 'works' && (
+                <TouchableOpacity 
+                  style={styles.addButton} 
+                  onPress={() => setIsUploadModalVisible(true)}
+                >
+                  <ThemedText style={styles.addButtonText}>Загрузить работу</ThemedText>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
         </View>
       </ScrollView>
       
@@ -386,30 +392,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  tabContainer: {
+  tabsContainer: {
     flexDirection: 'row',
+    marginTop: 20,
+    marginBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: '#ddd',
   },
-  tabButton: {
+  tab: {
     flex: 1,
-    alignItems: 'center',
     paddingVertical: 12,
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  tabText: {
-    fontSize: 14,
-    marginLeft: 6,
-    color: '#888',
+    alignItems: 'center',
   },
   activeTab: {
     borderBottomWidth: 2,
     borderBottomColor: '#0a7ea4',
   },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
   activeTabText: {
     color: '#0a7ea4',
-    fontWeight: '500',
+    fontWeight: '600',
   },
   contentContainer: {
     paddingVertical: 16,
@@ -505,5 +510,33 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: '#e74c3c',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#888',
+  },
+  emptyStateContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyStateText: {
+    fontSize: 14,
+    color: '#888',
+    textAlign: 'center',
+    maxWidth: 270,
+    lineHeight: 20,
+  },
+  artworksGrid: {
+    padding: 10,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  artworkItem: {
+    width: '48%',
+    marginBottom: 16,
   },
 });
