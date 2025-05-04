@@ -36,7 +36,7 @@ export function ArtworkCard({ artwork, compact = false, onContactRequest }: Artw
 
   // Функция для отображения запасного изображения
   const getBackupImageUrl = () => {
-    // Используем надежный CDN или базовые цвета в качестве запасного варианта
+    // Используем более надежный сервис для запасных изображений
     return `https://via.placeholder.com/800x800/${getColorForArtwork()}/ffffff?text=${encodeURIComponent(artwork.title)}`;
   };
 
@@ -52,6 +52,7 @@ export function ArtworkCard({ artwork, compact = false, onContactRequest }: Artw
   };
 
   const handleImageError = () => {
+    console.log(`Ошибка загрузки изображения: ${artwork.thumbnailUrl}`);
     setImageLoading(false);
     setImageError(true);
   };

@@ -162,7 +162,7 @@ export default function RegisterScreen() {
         <View style={styles.header}>
           <TouchableOpacity 
             style={styles.backButton}
-            onPress={() => step === 1 ? router.replace('/auth') : setStep(1)}
+            onPress={() => step === 1 ? router.replace('auth') : setStep(1)}
           >
             <FontAwesome name="arrow-left" size={20} color="#0a7ea4" />
           </TouchableOpacity>

@@ -40,7 +40,7 @@ function AuthenticationGuard({ children }: { children: React.ReactNode }) {
     if (!isAuthenticated && !inAuthGroup) {
       // Если пользователь не авторизован и не находится на экране авторизации,
       // перенаправляем на экран выбора между авторизацией и регистрацией
-      router.replace('/auth');
+      router.replace('auth');
     } else if (isAuthenticated && inAuthGroup) {
       // Если пользователь авторизован и находится на экране авторизации,
       // перенаправляем на главный экран

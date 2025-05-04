@@ -5,6 +5,65 @@ const generateId = (index: number): string => {
   return `artwork-${index + 1}`;
 };
 
+// Функция для генерации Unsplash URL на основе ID
+const getUnsplashUrl = (photoId: string): string => {
+  // Преобразуем photoId в стабильный Unsplash URL
+  // Вместо привязки к photoId, используем набор конкретных фото-ID для разных категорий
+  
+  // Набор ID для пейзажей
+  const landscapePhotos = [
+    'photo-1470770841072-f978cf4d019e', // горы
+    'photo-1506744038136-46273834b3fb', // горная река
+    'photo-1501785888041-af3ef285b470', // горы с туманом
+    'photo-1441974231531-c6227db76b6e', // лес
+    'photo-1520962880247-cfaf541c8724', // поле
+    'photo-1476362555312-ab9e108a0b7e', // осенний лес
+    'photo-1604537466158-719b1972feb8', // река
+  ];
+
+  // Набор ID для портретов
+  const portraitPhotos = [
+    'photo-1578926288207-a90a5366759d', // женский портрет
+    'photo-1522075469751-3a6694fb2f61', // мужской портрет
+    'photo-1531746020798-e6953c6e8e04', // пожилой человек 
+    'photo-1531123897727-8f129e1688ce', // девушка
+    'photo-1539571696357-5a69c17a67c6', // мужчина
+    'photo-1494790108377-be9c29b29330', // женщина улыбается
+  ];
+
+  // Набор ID для абстрактного искусства
+  const abstractPhotos = [
+    'photo-1536924940846-227afb31e2a5', // абстрактная живопись
+    'photo-1489549132488-d00b7eee80f1', // краски
+    'photo-1504198070170-8f5c76b86e05', // абстрактный узор
+    'photo-1543857778-c4a1a3e0b2eb', // арт-инсталляция
+    'photo-1484589065579-248aad0d8b13', // яркие краски
+    'photo-1528459801416-a9e53bbf4e17', // геометрическая абстракция
+  ];
+
+  // Набор ID для натюрмортов
+  const stillLifePhotos = [
+    'photo-1490312278390-ab64016e0e66', // цветы
+    'photo-1525310072745-f49212b5ac6d', // фрукты
+    'photo-1482012792084-a0c3725f289f', // чашка
+    'photo-1536977084677-ac8ec4a2f260', // еда
+    'photo-1513519245088-0e12902e5a38', // цветочная композиция
+  ];
+
+  // Выбираем фото из соответствующей категории на основе числового ID
+  const numId = parseInt(photoId.replace(/\D/g, '') || '1', 10);
+  
+  if (numId % 4 === 0) {
+    return `https://images.unsplash.com/${portraitPhotos[numId % portraitPhotos.length]}?w=800&h=800&fit=crop`;
+  } else if (numId % 4 === 1) {
+    return `https://images.unsplash.com/${landscapePhotos[numId % landscapePhotos.length]}?w=800&h=800&fit=crop`;
+  } else if (numId % 4 === 2) {
+    return `https://images.unsplash.com/${abstractPhotos[numId % abstractPhotos.length]}?w=800&h=800&fit=crop`;
+  } else {
+    return `https://images.unsplash.com/${stillLifePhotos[numId % stillLifePhotos.length]}?w=800&h=800&fit=crop`;
+  }
+};
+
 // Базовые данные художников для работ
 const ARTISTS = [
   {
@@ -76,8 +135,8 @@ const fixedArtworks: Artwork[] = [
     id: '1',
     title: 'Закат в горах',
     description: 'Акварельная живопись вечернего заката в горах. Работа выполнена на бумаге высокого качества с использованием профессиональных акварельных красок.',
-    images: ['https://picsum.photos/id/111/800/800'],
-    thumbnailUrl: 'https://picsum.photos/id/111/800/800',
+    images: ['https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=800&h=800&fit=crop'],
+    thumbnailUrl: 'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=800&h=800&fit=crop',
     artistId: '1',
     artistName: 'Марина Иванова',
     artistAvatar: 'https://i.pravatar.cc/150?img=36',
@@ -98,8 +157,8 @@ const fixedArtworks: Artwork[] = [
     id: '8',
     title: 'Фантастический мир',
     description: 'Цифровая иллюстрация фантастического мира с летающими островами и необычными существами.',
-    images: ['https://picsum.photos/id/63/800/800'],
-    thumbnailUrl: 'https://picsum.photos/id/63/800/800',
+    images: ['https://images.unsplash.com/photo-1484589065579-248aad0d8b13?w=800&h=800&fit=crop'],
+    thumbnailUrl: 'https://images.unsplash.com/photo-1484589065579-248aad0d8b13?w=800&h=800&fit=crop',
     artistId: '1',
     artistName: 'Марина Иванова',
     artistAvatar: 'https://i.pravatar.cc/150?img=36',
@@ -160,6 +219,7 @@ const paintingArtworks: Artwork[] = Array.from({ length: 26 }, (_, index) => {
   ];
   
   const paintingData = paintings[index % paintings.length];
+  const imageUrl = getUnsplashUrl(paintingData.imageId);
   
   const mediums = ['Масло', 'Акрил', 'Темпера', 'Гуашь'];
   const tags = ['пейзаж', 'природа', 'живопись', 'классика', 'цвет', 'искусство', 'холст'];
@@ -168,8 +228,8 @@ const paintingArtworks: Artwork[] = Array.from({ length: 26 }, (_, index) => {
     id,
     title: paintingData.title,
     description: `Картина "${paintingData.title}" выполнена в технике ${getRandomItem(mediums).toLowerCase()} на холсте. Работа отражает красоту природы и мастерство художника в передаче цвета и света.`,
-    images: [`https://picsum.photos/id/${paintingData.imageId}/800/800`],
-    thumbnailUrl: `https://picsum.photos/id/${paintingData.imageId}/800/800`,
+    images: [imageUrl],
+    thumbnailUrl: imageUrl,
     artistId: artist.id,
     artistName: artist.name,
     artistAvatar: artist.avatar,
@@ -227,6 +287,7 @@ const graphicsArtworks: Artwork[] = Array.from({ length: 25 }, (_, index) => {
   ];
   
   const graphicData = graphics[index % graphics.length];
+  const imageUrl = getUnsplashUrl(graphicData.imageId);
   
   const mediums = ['Карандаш', 'Уголь', 'Тушь', 'Пастель', 'Маркер'];
   const tags = ['графика', 'рисунок', 'скетч', 'линии', 'штриховка', 'набросок', 'иллюстрация'];
@@ -235,8 +296,8 @@ const graphicsArtworks: Artwork[] = Array.from({ length: 25 }, (_, index) => {
     id,
     title: graphicData.title,
     description: `"${graphicData.title}" — графическая работа, выполненная в технике ${getRandomItem(mediums).toLowerCase()}. Художник демонстрирует мастерство работы с линией и формой.`,
-    images: [`https://picsum.photos/id/${graphicData.imageId}/800/800`],
-    thumbnailUrl: `https://picsum.photos/id/${graphicData.imageId}/800/800`,
+    images: [imageUrl],
+    thumbnailUrl: imageUrl,
     artistId: artist.id,
     artistName: artist.name,
     artistAvatar: artist.avatar,
@@ -311,8 +372,8 @@ const digitalArtworks: Artwork[] = Array.from({ length: 33 }, (_, index) => {
     id,
     title: digitalArtData.title,
     description: `"${digitalArtData.title}" — цифровая работа, созданная в программе ${getRandomItem(software)}. Автор использует ${getRandomItem(mediums).toLowerCase()} для создания уникального визуального опыта.`,
-    images: [`https://picsum.photos/id/${digitalArtData.imageId}/800/800`],
-    thumbnailUrl: `https://picsum.photos/id/${digitalArtData.imageId}/800/800`,
+    images: [`https://images.unsplash.com/${digitalArtData.imageId}?w=800&h=800&fit=crop`],
+    thumbnailUrl: `https://images.unsplash.com/${digitalArtData.imageId}?w=800&h=800&fit=crop`,
     artistId: artist.id,
     artistName: artist.name,
     artistAvatar: artist.avatar,
@@ -372,8 +433,8 @@ const sculptureArtworks: Artwork[] = Array.from({ length: 19 }, (_, index) => {
     id,
     title: sculptureData.title,
     description: `Скульптура "${sculptureData.title}" выполнена из ${getRandomItem(mediums).toLowerCase()}. Автор исследует форму и объем, создавая выразительную трехмерную композицию.`,
-    images: [`https://picsum.photos/id/${sculptureData.imageId}/800/800`],
-    thumbnailUrl: `https://picsum.photos/id/${sculptureData.imageId}/800/800`,
+    images: [`https://images.unsplash.com/${sculptureData.imageId}?w=800&h=800&fit=crop`],
+    thumbnailUrl: `https://images.unsplash.com/${sculptureData.imageId}?w=800&h=800&fit=crop`,
     artistId: artist.id,
     artistName: artist.name,
     artistAvatar: artist.avatar,

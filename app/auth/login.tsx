@@ -66,7 +66,7 @@ export default function LoginScreen() {
         <View style={styles.header}>
           <TouchableOpacity 
             style={styles.backButton}
-            onPress={() => router.replace('/auth')}
+            onPress={() => router.replace('auth')}
           >
             <FontAwesome name="arrow-left" size={20} color="#0a7ea4" />
           </TouchableOpacity>

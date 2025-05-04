@@ -18,7 +18,7 @@ export default function StartScreen() {
       if (isAuthenticated) {
         router.replace('/(tabs)');
       } else {
-        router.replace('/auth');
+        router.replace('auth');
       }
     }, 2000); // Показываем экран загрузки на 2 секунды
 
