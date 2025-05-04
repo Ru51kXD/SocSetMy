@@ -401,6 +401,16 @@ export default function ArtistProfileScreen() {
     }
   };
   
+  const renderArtworkItem = ({ item }: { item: Artwork }) => (
+    <View style={styles.artworkItem}>
+      <ArtworkCard 
+        artwork={item} 
+        compact={false} 
+        onContactRequest={(artwork) => setIsContactModalVisible(true)}
+      />
+    </View>
+  );
+  
   const renderPortfolioTab = () => (
     <View style={styles.portfolioContainer}>
       {artworks.length === 0 ? (
@@ -579,13 +589,6 @@ export default function ArtistProfileScreen() {
           </TouchableOpacity>
         </View>
       </View>
-
-      {/* Контент выбранного таба */}
-      <View style={styles.tabContent}>
-        {activeTab === 'portfolio' && renderPortfolioTab()}
-        {activeTab === 'about' && renderAboutTab()}
-        {activeTab === 'collections' && renderCollectionsTab()}
-      </View>
     </>
   );
   
@@ -628,12 +631,37 @@ export default function ArtistProfileScreen() {
             </TouchableOpacity>
           </ThemedView>
           
-          <ScrollView 
-            style={styles.contentContainer}
-            showsVerticalScrollIndicator={false}
-          >
-            {renderHeader()}
-          </ScrollView>
+          {activeTab === 'portfolio' ? (
+            <View style={styles.contentContainer}>
+              {artworks.length === 0 ? (
+                <ThemedView style={styles.emptyState}>
+                  <ThemedText style={styles.emptyStateText}>У художника пока нет работ</ThemedText>
+                </ThemedView>
+              ) : (
+                <FlatList
+                  data={artworks}
+                  renderItem={renderArtworkItem}
+                  numColumns={2}
+                  keyExtractor={(item) => `profile-artwork-${item.id}`}
+                  columnWrapperStyle={styles.columnWrapper}
+                  contentContainerStyle={styles.artworksContainer}
+                  showsVerticalScrollIndicator={false}
+                  ListHeaderComponent={renderHeader}
+                />
+              )}
+            </View>
+          ) : (
+            <ScrollView 
+              style={styles.contentContainer}
+              showsVerticalScrollIndicator={false}
+            >
+              {renderHeader()}
+              <View style={styles.tabContent}>
+                {activeTab === 'about' && renderAboutTab()}
+                {activeTab === 'collections' && renderCollectionsTab()}
+              </View>
+            </ScrollView>
+          )}
 
           {artist && (
             <ContactArtistModal
@@ -898,7 +926,10 @@ const styles = StyleSheet.create({
   artworksContainer: {
     padding: 16,
   },
-  renderArtworkItem: {
-    // Implementation of renderArtworkItem function
+  artworkItem: {
+    flex: 1,
+    padding: 4,
+    width: '48%',
+    marginBottom: 12,
   },
 }); 

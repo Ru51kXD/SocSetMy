@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Image, TouchableOpacity, Dimensions, Modal, FlatList } from 'react-native';
+import { StyleSheet, View, Image, TouchableOpacity, Dimensions, Modal, FlatList, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
@@ -22,6 +22,8 @@ export function ArtworkCard({ artwork, compact = false, onContactRequest }: Artw
   const router = useRouter();
   const { threads, shareArtwork, setActiveChat, hasThreadWithArtist } = useMessages();
   const [isShareModalVisible, setIsShareModalVisible] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
 
   // Получаем уникальных художников из существующих чатов
   const chatArtists = threads.map(thread => thread.artist);
@@ -31,6 +33,28 @@ export function ArtworkCard({ artwork, compact = false, onContactRequest }: Artw
   if (currentArtist && !chatArtists.some(artist => artist.id === currentArtist)) {
     // Если это текущий автор работы, его не добавляем в список для отправки
   }
+
+  // Функция для отображения запасного изображения
+  const getBackupImageUrl = () => {
+    // Используем надежный CDN или базовые цвета в качестве запасного варианта
+    return `https://via.placeholder.com/800x800/${getColorForArtwork()}/ffffff?text=${encodeURIComponent(artwork.title)}`;
+  };
+
+  // Функция для генерации цвета на основе ID работы
+  const getColorForArtwork = () => {
+    const colors = ['1a73e8', 'ff4151', '0a7ea4', '388e3c', '7b1fa2', 'fb8c00'];
+    const id = parseInt(artwork.id.replace(/\D/g, '') || '1');
+    return colors[id % colors.length];
+  };
+
+  const handleImageLoad = () => {
+    setImageLoading(false);
+  };
+
+  const handleImageError = () => {
+    setImageLoading(false);
+    setImageError(true);
+  };
 
   const handlePress = () => {
     router.push(`/artwork/${artwork.id}`);
@@ -98,7 +122,19 @@ export function ArtworkCard({ artwork, compact = false, onContactRequest }: Artw
   if (compact) {
     return (
       <TouchableOpacity style={styles.compactCard} onPress={handlePress}>
-        <Image source={{ uri: artwork.thumbnailUrl }} style={styles.compactImage} />
+        <View style={styles.compactImageContainer}>
+          {imageLoading && (
+            <View style={[styles.compactImage, styles.imagePlaceholder]}>
+              <ActivityIndicator size="small" color="#0a7ea4" />
+            </View>
+          )}
+          <Image 
+            source={{ uri: imageError ? getBackupImageUrl() : artwork.thumbnailUrl }} 
+            style={[styles.compactImage, imageLoading && styles.hiddenImage]} 
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+          />
+        </View>
         <ThemedText style={styles.compactTitle} numberOfLines={1}>{artwork.title}</ThemedText>
       </TouchableOpacity>
     );
@@ -107,7 +143,19 @@ export function ArtworkCard({ artwork, compact = false, onContactRequest }: Artw
   return (
     <>
       <TouchableOpacity style={styles.card} onPress={handlePress}>
-        <Image source={{ uri: artwork.thumbnailUrl }} style={styles.image} />
+        <View style={styles.imageContainer}>
+          {imageLoading && (
+            <View style={[styles.image, styles.imagePlaceholder]}>
+              <ActivityIndicator size="large" color="#0a7ea4" />
+            </View>
+          )}
+          <Image 
+            source={{ uri: imageError ? getBackupImageUrl() : artwork.thumbnailUrl }} 
+            style={[styles.image, imageLoading && styles.hiddenImage]} 
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+          />
+        </View>
         <ThemedView style={styles.cardContent}>
           <ThemedText style={styles.title} numberOfLines={2}>{artwork.title}</ThemedText>
           
@@ -214,10 +262,28 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  imageContainer: {
+    position: 'relative',
+    width: '100%',
+    height: 200,
+  },
   image: {
     width: '100%',
     height: 200,
     resizeMode: 'cover',
+  },
+  imagePlaceholder: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+  },
+  hiddenImage: {
+    opacity: 0,
   },
   cardContent: {
     padding: 12,
@@ -260,6 +326,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
     marginBottom: 16,
+  },
+  compactImageContainer: {
+    position: 'relative',
+    width: '100%',
+    height: cardWidth,
   },
   compactImage: {
     width: '100%',
