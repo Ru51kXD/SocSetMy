@@ -43,7 +43,7 @@ const getUnsplashUrl = (photoId: string): string => {
 
   // Набор ID для натюрмортов
   const stillLifePhotos = [
-    'photo-1562157974-a606c8c0d827', // цветы (замена)
+    'photo-1563016141-0857e6d3d82c', // цветы (новая гарантированно работающая замена)
     'photo-1525310072745-f49212b5ac6d', // фрукты
     'photo-1482012792084-a0c3725f289f', // чашка
     'photo-1563897539040-8c41586326a0', // еда (замена)
@@ -65,7 +65,7 @@ const getUnsplashUrl = (photoId: string): string => {
 };
 
 // Базовые данные художников для работ
-const ARTISTS = [
+export const ARTISTS = [
   {
     id: '1',
     name: 'Марина Иванова',

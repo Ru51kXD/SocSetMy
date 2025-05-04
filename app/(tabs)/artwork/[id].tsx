@@ -9,6 +9,7 @@ import { MOCK_ARTWORKS } from '@/app/data/artworks';
 import { ContactArtistModal } from '@/app/components/common/ContactArtistModal';
 import { useMessages } from '@/app/context/MessageContext';
 import { useUserPreferences } from '@/app/context/UserPreferencesContext';
+import { CommentsSection } from '@/app/components/common/CommentsSection';
 
 const { width } = Dimensions.get('window');
 
@@ -184,105 +185,107 @@ export default function ArtworkDetailScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <Image source={{ uri: artwork.images[0] }} style={styles.image} />
+      <View style={styles.mainContent}>
+        <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollContainer}>
+          <Image source={{ uri: artwork.images[0] }} style={styles.image} />
 
-        <View style={styles.contentContainer}>
-          <ThemedText style={styles.title}>{artwork.title}</ThemedText>
-          
-          <TouchableOpacity style={styles.artistRow} onPress={handleArtistPress}>
-            <Image source={{ uri: artwork.artistAvatar }} style={styles.avatar} />
-            <ThemedText style={styles.artistName}>{artwork.artistName}</ThemedText>
-          </TouchableOpacity>
-          
-          <View style={styles.statsRow}>
-            <TouchableOpacity style={styles.stat} onPress={handleLikeToggle}>
-              <FontAwesome 
-                name={isLiked ? "heart" : "heart-o"} 
-                size={18} 
-                color={isLiked ? "#FF4151" : "#666"} 
-              />
-              <ThemedText style={styles.statText}>{artwork.likes + (isLiked ? 1 : 0)}</ThemedText>
+          <View style={styles.contentContainer}>
+            <ThemedText style={styles.title}>{artwork.title}</ThemedText>
+            
+            <TouchableOpacity style={styles.artistRow} onPress={handleArtistPress}>
+              <Image source={{ uri: artwork.artistAvatar }} style={styles.avatar} />
+              <ThemedText style={styles.artistName}>{artwork.artistName}</ThemedText>
             </TouchableOpacity>
-            <View style={styles.stat}>
-              <FontAwesome name="eye" size={18} color="#666" />
-              <ThemedText style={styles.statText}>{artwork.views}</ThemedText>
-            </View>
-            <View style={styles.stat}>
-              <FontAwesome name="comment-o" size={18} color="#666" />
-              <ThemedText style={styles.statText}>{artwork.comments}</ThemedText>
-            </View>
-            <TouchableOpacity style={styles.stat} onPress={handleSaveToggle}>
-              <FontAwesome 
-                name={isSaved ? "bookmark" : "bookmark-o"} 
-                size={18} 
-                color={isSaved ? "#0a7ea4" : "#666"} 
-              />
-              <ThemedText style={styles.statText}>Сохранить</ThemedText>
-            </TouchableOpacity>
-          </View>
-          
-          <ThemedText style={styles.description}>{artwork.description}</ThemedText>
-          
-          <View style={styles.detailsContainer}>
-            <View style={styles.detailRow}>
-              <ThemedText style={styles.detailLabel}>Категория:</ThemedText>
-              <ThemedText style={styles.detailValue}>{artwork.categories.join(', ')}</ThemedText>
-            </View>
-            <View style={styles.detailRow}>
-              <ThemedText style={styles.detailLabel}>Техника:</ThemedText>
-              <ThemedText style={styles.detailValue}>{artwork.medium}</ThemedText>
-            </View>
-            {artwork.dimensions && (
-              <View style={styles.detailRow}>
-                <ThemedText style={styles.detailLabel}>Размеры:</ThemedText>
-                <ThemedText style={styles.detailValue}>{artwork.dimensions}</ThemedText>
+            
+            <View style={styles.statsRow}>
+              <TouchableOpacity style={styles.stat} onPress={handleLikeToggle}>
+                <FontAwesome 
+                  name={isLiked ? "heart" : "heart-o"} 
+                  size={18} 
+                  color={isLiked ? "#FF4151" : "#666"} 
+                />
+                <ThemedText style={styles.statText}>{artwork.likes + (isLiked ? 1 : 0)}</ThemedText>
+              </TouchableOpacity>
+              <View style={styles.stat}>
+                <FontAwesome name="eye" size={18} color="#666" />
+                <ThemedText style={styles.statText}>{artwork.views}</ThemedText>
               </View>
-            )}
-            <View style={styles.detailRow}>
-              <ThemedText style={styles.detailLabel}>Дата создания:</ThemedText>
-              <ThemedText style={styles.detailValue}>{artwork.createdAt}</ThemedText>
-            </View>
-          </View>
-          
-          {artwork.tags && artwork.tags.length > 0 && (
-            <View style={styles.tagsContainer}>
-              {artwork.tags.map((tag, index) => (
-                <View key={index} style={styles.tag}>
-                  <ThemedText style={styles.tagText}>#{tag}</ThemedText>
-                </View>
-              ))}
-            </View>
-          )}
-          
-          {artwork.isForSale && (
-            <View style={styles.priceSection}>
-              <View style={styles.priceContainer}>
-                <ThemedText style={styles.priceLabel}>Цена:</ThemedText>
-                <ThemedText style={styles.price}>
-                  {artwork.price?.toLocaleString()} {artwork.currency}
-                </ThemedText>
+              <View style={styles.stat}>
+                <FontAwesome name="comment-o" size={18} color="#666" />
+                <ThemedText style={styles.statText}>{artwork.comments}</ThemedText>
               </View>
-              
-              <TouchableOpacity 
-                style={styles.contactButton}
-                onPress={handleContactArtist}
-              >
-                <ThemedText style={styles.contactButtonText}>
-                  Связаться с продавцом
-                </ThemedText>
+              <TouchableOpacity style={styles.stat} onPress={handleSaveToggle}>
+                <FontAwesome 
+                  name={isSaved ? "bookmark" : "bookmark-o"} 
+                  size={18} 
+                  color={isSaved ? "#0a7ea4" : "#666"} 
+                />
+                <ThemedText style={styles.statText}>Сохранить</ThemedText>
               </TouchableOpacity>
             </View>
-          )}
-        </View>
-      </ScrollView>
+            
+            <ThemedText style={styles.description}>{artwork.description}</ThemedText>
+            
+            <View style={styles.detailsContainer}>
+              <View style={styles.detailRow}>
+                <ThemedText style={styles.detailLabel}>Категория:</ThemedText>
+                <ThemedText style={styles.detailValue}>{artwork.categories.join(', ')}</ThemedText>
+              </View>
+              <View style={styles.detailRow}>
+                <ThemedText style={styles.detailLabel}>Техника:</ThemedText>
+                <ThemedText style={styles.detailValue}>{artwork.medium}</ThemedText>
+              </View>
+              {artwork.dimensions && (
+                <View style={styles.detailRow}>
+                  <ThemedText style={styles.detailLabel}>Размеры:</ThemedText>
+                  <ThemedText style={styles.detailValue}>{artwork.dimensions}</ThemedText>
+                </View>
+              )}
+              <View style={styles.detailRow}>
+                <ThemedText style={styles.detailLabel}>Дата создания:</ThemedText>
+                <ThemedText style={styles.detailValue}>{artwork.createdAt}</ThemedText>
+              </View>
+            </View>
+            
+            {artwork.tags && artwork.tags.length > 0 && (
+              <View style={styles.tagsContainer}>
+                {artwork.tags.map((tag, index) => (
+                  <View key={`tag-${index}`} style={styles.tag}>
+                    <ThemedText style={styles.tagText}>#{tag}</ThemedText>
+                  </View>
+                ))}
+              </View>
+            )}
+            
+            {artwork.isForSale && (
+              <View style={styles.priceContainer}>
+                <ThemedText style={styles.priceLabel}>Цена:</ThemedText>
+                <ThemedText style={styles.priceValue}>
+                  {artwork.price?.toLocaleString()} {artwork.currency}
+                </ThemedText>
+                <TouchableOpacity 
+                  style={styles.contactButton}
+                  onPress={handleContactArtist}
+                >
+                  <ThemedText style={styles.contactButtonText}>Связаться с продавцом</ThemedText>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        </ScrollView>
+      </View>
       
-      {artist && (
-        <ContactArtistModal 
+      <View style={styles.commentsContainer}>
+        <CommentsSection artworkId={artwork.id} commentCount={artwork.comments} />
+      </View>
+      
+      {isContactModalVisible && artist && (
+        <ContactArtistModal
           visible={isContactModalVisible}
           artist={artist}
           artwork={artwork}
           onClose={() => setIsContactModalVisible(false)}
+          onSubmit={handleContactArtist}
         />
       )}
     </ThemedView>
@@ -291,6 +294,19 @@ export default function ArtworkDetailScreen() {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  mainContent: {
+    flex: 0.6, // 60% высоты экрана
+  },
+  commentsContainer: {
+    flex: 0.4, // 40% высоты экрана
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  scrollContainer: {
     flex: 1,
   },
   loadingContainer: {
@@ -385,12 +401,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
   },
-  priceSection: {
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    paddingTop: 16,
-    marginBottom: 24,
-  },
   priceContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -400,7 +410,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginRight: 8,
   },
-  price: {
+  priceValue: {
     fontSize: 22,
     fontWeight: 'bold',
     color: '#0a7ea4',

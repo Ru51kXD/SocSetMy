@@ -51,4 +51,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-}); 
+});
+
+// Добавляем экспорт по умолчанию для совместимости с Expo Router
+export default WeeklyTopArtworks; 
