@@ -35,7 +35,7 @@ const getUnsplashUrl = (photoId: string): string => {
   const abstractPhotos = [
     'photo-1536924940846-227afb31e2a5', // абстрактная живопись
     'photo-1489549132488-d00b7eee80f1', // краски
-    'photo-1504198070170-8f5c76b86e05', // абстрактный узор
+    'photo-1618005182384-a83a8bd57fbe', // абстрактный узор (замена)
     'photo-1543857778-c4a1a3e0b2eb', // арт-инсталляция
     'photo-1484589065579-248aad0d8b13', // яркие краски
     'photo-1528459801416-a9e53bbf4e17', // геометрическая абстракция
@@ -43,10 +43,10 @@ const getUnsplashUrl = (photoId: string): string => {
 
   // Набор ID для натюрмортов
   const stillLifePhotos = [
-    'photo-1490312278390-ab64016e0e66', // цветы
+    'photo-1562157974-a606c8c0d827', // цветы (замена)
     'photo-1525310072745-f49212b5ac6d', // фрукты
     'photo-1482012792084-a0c3725f289f', // чашка
-    'photo-1536977084677-ac8ec4a2f260', // еда
+    'photo-1563897539040-8c41586326a0', // еда (замена)
     'photo-1513519245088-0e12902e5a38', // цветочная композиция
   ];
 
@@ -363,6 +363,7 @@ const digitalArtworks: Artwork[] = Array.from({ length: 33 }, (_, index) => {
   ];
   
   const digitalArtData = digitalArts[index % digitalArts.length];
+  const imageUrl = getUnsplashUrl(digitalArtData.imageId);
   
   const mediums = ['Цифровая иллюстрация', '3D моделирование', 'Фотоманипуляция', 'Векторная графика', 'Пиксель-арт'];
   const software = ['Photoshop', 'Procreate', 'Blender', 'Illustrator', 'ZBrush', 'Clip Studio Paint'];
@@ -372,8 +373,8 @@ const digitalArtworks: Artwork[] = Array.from({ length: 33 }, (_, index) => {
     id,
     title: digitalArtData.title,
     description: `"${digitalArtData.title}" — цифровая работа, созданная в программе ${getRandomItem(software)}. Автор использует ${getRandomItem(mediums).toLowerCase()} для создания уникального визуального опыта.`,
-    images: [`https://images.unsplash.com/${digitalArtData.imageId}?w=800&h=800&fit=crop`],
-    thumbnailUrl: `https://images.unsplash.com/${digitalArtData.imageId}?w=800&h=800&fit=crop`,
+    images: [imageUrl],
+    thumbnailUrl: imageUrl,
     artistId: artist.id,
     artistName: artist.name,
     artistAvatar: artist.avatar,
@@ -425,6 +426,7 @@ const sculptureArtworks: Artwork[] = Array.from({ length: 19 }, (_, index) => {
   ];
   
   const sculptureData = sculptures[index % sculptures.length];
+  const imageUrl = getUnsplashUrl(sculptureData.imageId);
   
   const mediums = ['Бронза', 'Мрамор', 'Дерево', 'Глина', 'Металл', 'Гипс', 'Смешанная техника'];
   const tags = ['скульптура', 'объем', 'форма', '3D', 'пластика', 'композиция', 'искусство'];
@@ -433,8 +435,8 @@ const sculptureArtworks: Artwork[] = Array.from({ length: 19 }, (_, index) => {
     id,
     title: sculptureData.title,
     description: `Скульптура "${sculptureData.title}" выполнена из ${getRandomItem(mediums).toLowerCase()}. Автор исследует форму и объем, создавая выразительную трехмерную композицию.`,
-    images: [`https://images.unsplash.com/${sculptureData.imageId}?w=800&h=800&fit=crop`],
-    thumbnailUrl: `https://images.unsplash.com/${sculptureData.imageId}?w=800&h=800&fit=crop`,
+    images: [imageUrl],
+    thumbnailUrl: imageUrl,
     artistId: artist.id,
     artistName: artist.name,
     artistAvatar: artist.avatar,
