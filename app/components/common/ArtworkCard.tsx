@@ -46,8 +46,10 @@ export function ArtworkCard({ artwork, compact = false, onContactRequest }: Artw
 
   // Функция для отображения запасного изображения
   const getBackupImageUrl = () => {
+    // Проверка, что у работы есть название для использования в запасном изображении
+    const safeTitle = artwork.title ? encodeURIComponent(artwork.title) : 'artwork';
     // Используем более надежный сервис для запасных изображений
-    return `https://via.placeholder.com/800x800/${getColorForArtwork()}/ffffff?text=${encodeURIComponent(artwork.title)}`;
+    return `https://via.placeholder.com/800x800/${getColorForArtwork()}/ffffff?text=${safeTitle}`;
   };
 
   // Функция для генерации цвета на основе ID работы
@@ -219,6 +221,11 @@ export function ArtworkCard({ artwork, compact = false, onContactRequest }: Artw
   );
 
   if (compact) {
+    // Проверяем, есть ли URL изображения перед рендерингом
+    if (!artwork.thumbnailUrl || artwork.thumbnailUrl.trim() === '') {
+      return null; // Не рендерим карточку, если URL отсутствует
+    }
+    
     return (
       <TouchableOpacity style={styles.compactCard} onPress={handlePress}>
         <View style={styles.compactImageContainer}>
@@ -233,6 +240,14 @@ export function ArtworkCard({ artwork, compact = false, onContactRequest }: Artw
             onLoad={handleImageLoad}
             onError={handleImageError}
           />
+          
+          {/* Добавляем индикаторы лайков и сохранений в компактную карточку */}
+          <View style={styles.compactOverlay}>
+            <View style={styles.compactOverlayIcons}>
+              {liked && <FontAwesome name="heart" size={12} color="#FF4151" style={styles.compactStatusIcon} />}
+              {saved && <FontAwesome name="bookmark" size={12} color="#0a7ea4" style={styles.compactStatusIcon} />}
+            </View>
+          </View>
         </View>
         <ThemedText style={styles.compactTitle} numberOfLines={1}>{artwork.title}</ThemedText>
       </TouchableOpacity>
@@ -441,11 +456,14 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
     marginBottom: 16,
+    backgroundColor: '#fff',
   },
   compactImageContainer: {
     position: 'relative',
     width: '100%',
     height: cardWidth,
+    borderRadius: 8,
+    overflow: 'hidden',
   },
   compactImage: {
     width: '100%',
@@ -454,8 +472,27 @@ const styles = StyleSheet.create({
   },
   compactTitle: {
     fontSize: 12,
-    marginTop: 4,
+    marginTop: 8,
+    marginBottom: 4,
     textAlign: 'center',
+    paddingHorizontal: 4,
+  },
+  compactOverlay: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    padding: 4,
+  },
+  compactOverlayIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  compactStatusIcon: {
+    marginLeft: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1,
   },
   contactButton: {
     flexDirection: 'row',

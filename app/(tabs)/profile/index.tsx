@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, TouchableOpacity, ScrollView, Text, Alert, ActivityIndicator, FlatList } from 'react-native';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { StyleSheet, View, TouchableOpacity, ScrollView, Text, Alert, ActivityIndicator, FlatList, Dimensions } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -13,6 +13,10 @@ import { useArtworks } from '@/app/context/ArtworkContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { UploadArtworkModal } from '@/app/components/artwork/UploadArtworkModal';
 import { useUserPreferences } from '@/app/context/UserPreferencesContext';
+
+// Константа для расчета размеров сетки
+const { width } = Dimensions.get('window');
+const cardWidth = width / 2 - 24; // Две карточки в ряду с учетом отступов
 
 // Моковые данные для сохраненных и понравившихся работ - эти данные будут использоваться только для демо
 const SAVED_ARTWORKS: Artwork[] = [
@@ -59,59 +63,18 @@ const SAVED_ARTWORKS: Artwork[] = [
 
 const LIKED_ARTWORKS: Artwork[] = [
   {
-    id: '3',
-    title: 'Портрет незнакомки',
-    description: 'Портрет девушки, выполненный маслом на холсте.',
-    images: ['https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=800&h=800&fit=crop'],
-    thumbnailUrl: 'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=800&h=800&fit=crop',
-    artistId: '3',
-    artistName: 'Елена Смирнова',
-    artistAvatar: 'https://i.pravatar.cc/150?img=25',
-    categories: ['Живопись'],
-    tags: ['портрет', 'масло', 'классика'],
-    medium: 'Масло',
-    dimensions: '50x70 см',
-    likes: 280,
-    views: 650,
-    comments: 32,
-    isForSale: true,
-    price: 25000,
-    currency: 'RUB',
-    createdAt: '2023-04-05'
-  },
-  {
-    id: '7',
-    title: 'Скульптура "Движение"',
-    description: 'Скульптура из металла, символизирующая движение времени.',
-    images: ['https://images.unsplash.com/photo-1549887552-cb1071d3e5ca'],
-    thumbnailUrl: 'https://images.unsplash.com/photo-1549887552-cb1071d3e5ca',
-    artistId: '6',
-    artistName: 'Алексей Иванов',
-    artistAvatar: 'https://images.unsplash.com/photo-1504257432389-52343af06ae3',
-    categories: ['Скульптура'],
-    tags: ['металл', 'абстракция', 'движение'],
-    medium: 'Металл',
-    likes: 132,
-    views: 745,
-    comments: 23,
-    isForSale: true,
-    price: 75000,
-    currency: 'RUB',
-    createdAt: '2023-07-03'
-  },
-  {
     id: '10',
     title: 'Закат в горах',
-    description: 'Акварельная живопись вечернего заката в горах.',
-    images: ['https://images.unsplash.com/photo-1484589065579-248aad0d8b13?w=800&h=800&fit=crop'],
-    thumbnailUrl: 'https://images.unsplash.com/photo-1484589065579-248aad0d8b13?w=800&h=800&fit=crop',
+    description: 'Фотография живописного заката в горах с озером.',
+    images: ['https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&h=800&fit=crop'],
+    thumbnailUrl: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&h=800&fit=crop',
     artistId: '1',
     artistName: 'Марина Иванова',
     artistAvatar: 'https://i.pravatar.cc/150?img=36',
-    categories: ['Живопись'],
+    categories: ['Фотография'],
     tags: ['пейзаж', 'закат', 'горы'],
-    medium: 'Акварель',
-    dimensions: '40x30 см',
+    medium: 'Цифровая фотография',
+    dimensions: '4000x3000 px',
     likes: 450,
     views: 1230,
     comments: 28,
@@ -119,6 +82,24 @@ const LIKED_ARTWORKS: Artwork[] = [
     price: 15000,
     currency: 'RUB',
     createdAt: '2023-05-12'
+  },
+  {
+    id: '3',
+    title: 'Яблоневый сад',
+    description: 'Абстрактная цифровая иллюстрация с яркими цветами.',
+    images: ['https://images.unsplash.com/photo-1579546929662-711aa81148cf?w=800&h=800&fit=crop'],
+    thumbnailUrl: 'https://images.unsplash.com/photo-1579546929662-711aa81148cf?w=800&h=800&fit=crop',
+    artistId: '3',
+    artistName: 'Елена Смирнова',
+    artistAvatar: 'https://i.pravatar.cc/150?img=25',
+    categories: ['Цифровое искусство'],
+    tags: ['абстракция', 'цвет', 'графика'],
+    medium: 'Цифровая графика',
+    likes: 280,
+    views: 650,
+    comments: 32,
+    isForSale: false,
+    createdAt: '2023-04-05'
   }
 ];
 
@@ -177,6 +158,8 @@ export default function ProfileScreen() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isUploadModalVisible, setIsUploadModalVisible] = useState(false);
+  const [columnWidth, setColumnWidth] = useState(0);
+  const containerRef = useRef<View>(null);
   
   // Определяем, является ли пользователь новым (только что зарегистрированным)
   const isNewUser = !!(user && user.id.startsWith('user-'));
@@ -187,6 +170,18 @@ export default function ProfileScreen() {
       setCurrentUser(user);
     }
   }, [user]);
+
+  // Вычисляем ширину колонки после рендеринга
+  useLayoutEffect(() => {
+    if (containerRef.current) {
+      setTimeout(() => {
+        containerRef.current?.measure((x, y, width) => {
+          const calculatedWidth = (width - 30) / 2; // 30px для отступов
+          setColumnWidth(calculatedWidth);
+        });
+      }, 100);
+    }
+  }, []);
 
   // Обработчик редактирования профиля
   const handleEditProfile = () => {
@@ -262,6 +257,41 @@ export default function ProfileScreen() {
     }
   };
 
+  // Функция для разделения работ на две колонки с учетом их пропорций
+  const getColumnedArtworks = () => {
+    const works = getActiveTabArtworks().filter(artwork => 
+      artwork.thumbnailUrl && 
+      artwork.thumbnailUrl.trim() !== '' && 
+      !artwork.thumbnailUrl.includes('undefined')
+    );
+    
+    // Создаем два массива для колонок
+    let leftColumn = [];
+    let rightColumn = [];
+    
+    // Отслеживаем текущую высоту каждой колонки
+    let leftHeight = 0;
+    let rightHeight = 0;
+    
+    // Распределяем работы по колонкам для более равномерного отображения
+    works.forEach(artwork => {
+      // Для простого распределения используем стандартное соотношение 1:1
+      // В реальном приложении здесь можно использовать фактические размеры изображений
+      const artworkHeight = cardWidth; // используем то же значение, что и в ArtworkCard
+      
+      // Добавляем элемент в колонку с меньшей текущей высотой
+      if (leftHeight <= rightHeight) {
+        leftColumn.push(artwork);
+        leftHeight += artworkHeight + 16; // добавляем высоту элемента и marginBottom
+      } else {
+        rightColumn.push(artwork);
+        rightHeight += artworkHeight + 16; // добавляем высоту элемента и marginBottom
+      }
+    });
+    
+    return { leftColumn, rightColumn };
+  };
+
   // Если данные загружаются, показываем индикатор загрузки
   if (isLoadingArtworks || isLoadingPreferences) {
     return (
@@ -318,17 +348,30 @@ export default function ProfileScreen() {
         </View>
         
         {/* Отображение работ выбранной вкладки */}
-        <View style={styles.contentContainer}>
+        <View style={styles.contentContainer} ref={containerRef}>
           {getActiveTabArtworks().length > 0 ? (
             <View style={styles.artworksGrid}>
-              {getActiveTabArtworks().map(item => (
-                <View 
-                  key={`${activeTab}-artwork-${item.id}`}
-                  style={styles.artworkItem}
-                >
-                  <ArtworkCard artwork={item} compact />
-                </View>
-              ))}
+              <View style={styles.column}>
+                {getColumnedArtworks().leftColumn.map(item => (
+                  <View 
+                    key={`${activeTab}-artwork-left-${item.id}`}
+                    style={styles.artworkItem}
+                  >
+                    <ArtworkCard artwork={item} compact={true} />
+                  </View>
+                ))}
+              </View>
+              
+              <View style={styles.column}>
+                {getColumnedArtworks().rightColumn.map(item => (
+                  <View 
+                    key={`${activeTab}-artwork-right-${item.id}`}
+                    style={styles.artworkItem}
+                  >
+                    <ArtworkCard artwork={item} compact={true} />
+                  </View>
+                ))}
+              </View>
             </View>
           ) : (
             <View style={styles.emptyStateContainer}>
@@ -530,13 +573,21 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   artworksGrid: {
-    padding: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     flexDirection: 'row',
-    flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
-  artworkItem: {
+  column: {
     width: '48%',
-    marginBottom: 16,
+  },
+  artworkItem: {
+    marginBottom: 20,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
   },
 });
