@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { StyleSheet, View, TextInput, TouchableOpacity, FlatList, Image, ActivityIndicator } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
@@ -6,8 +6,10 @@ import { ThemedView } from '@/components/ThemedView';
 import { ArtworkCard } from '@/app/components/common/ArtworkCard';
 import { CategoryList } from '@/app/components/common/CategoryList';
 import { User, Artwork, ArtCategory } from '@/app/models/types';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { MOCK_CATEGORIES } from '@/app/data/categories';
+import { useArtworks } from '@/app/context/ArtworkContext';
+import { MOCK_ARTWORKS } from '@/app/data/artworks';
 
 // Моковые данные для демонстрации
 const MOCK_ARTISTS: User[] = [
@@ -58,57 +60,142 @@ const MOCK_ARTISTS: User[] = [
   }
 ];
 
-const MOCK_ARTWORKS: Artwork[] = [
+// Добавим дополнительные работы с тегом "акварель"
+const WATERCOLOR_ARTWORKS: Artwork[] = [
   {
-    id: '1',
-    title: 'Городской пейзаж на закате',
-    description: 'Городской пейзаж, написанный маслом, изображающий город на закате.',
-    images: ['https://images.unsplash.com/photo-1535930891776-0c2dfb7fda1a'],
-    thumbnailUrl: 'https://images.unsplash.com/photo-1535930891776-0c2dfb7fda1a',
-    artistId: '1',
-    artistName: 'Михаил Лебедев',
-    artistAvatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d',
+    id: 'watercolor-1',
+    title: 'Акварельный пейзаж',
+    description: 'Пейзаж, написанный акварелью на холсте высокого качества',
+    images: ['https://images.pexels.com/photos/3308588/pexels-photo-3308588.jpeg?auto=compress&cs=tinysrgb&w=800&h=800&dpr=1'],
+    thumbnailUrl: 'https://images.pexels.com/photos/3308588/pexels-photo-3308588.jpeg?auto=compress&cs=tinysrgb&w=800&h=800&dpr=1',
+    artistId: '2',
+    artistName: 'Алексей Петров',
+    artistAvatar: 'https://i.pravatar.cc/150?img=12',
     categories: ['Живопись'],
-    tags: ['пейзаж', 'город', 'масло'],
-    medium: 'Масло',
-    likes: 245,
-    views: 1203,
-    comments: 48,
+    tags: ['акварель', 'пейзаж', 'природа'],
+    medium: 'Акварель',
+    likes: 325,
+    views: 1520,
+    comments: 42,
     isForSale: true,
-    price: 12000,
+    price: 18000,
     currency: 'RUB',
-    createdAt: '2023-09-15'
+    createdAt: '2023-08-12'
   },
   {
-    id: '2',
-    title: 'Цифровой портрет',
-    description: 'Портрет в неоновых тонах, созданный в Procreate.',
-    images: ['https://images.unsplash.com/photo-1602085234609-f1a0f5b73e8c'],
-    thumbnailUrl: 'https://images.unsplash.com/photo-1602085234609-f1a0f5b73e8c',
-    artistId: '2',
-    artistName: 'Анна Соколова',
-    artistAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb',
-    categories: ['Цифровое искусство'],
-    tags: ['портрет', 'неон', 'цифровое'],
-    medium: 'Цифровая иллюстрация',
-    likes: 578,
-    views: 3120,
-    comments: 92,
-    isForSale: false,
-    createdAt: '2023-11-27'
+    id: 'watercolor-2',
+    title: 'Акварельный натюрморт с цветами',
+    description: 'Натюрморт с весенними цветами, выполненный акварелью',
+    images: ['https://images.pexels.com/photos/6331040/pexels-photo-6331040.jpeg?auto=compress&cs=tinysrgb&w=800&h=800&dpr=1'],
+    thumbnailUrl: 'https://images.pexels.com/photos/6331040/pexels-photo-6331040.jpeg?auto=compress&cs=tinysrgb&w=800&h=800&dpr=1',
+    artistId: '3',
+    artistName: 'Елена Смирнова',
+    artistAvatar: 'https://i.pravatar.cc/150?img=25',
+    categories: ['Живопись'],
+    tags: ['акварель', 'натюрморт', 'цветы'],
+    medium: 'Акварель',
+    likes: 290,
+    views: 1350,
+    comments: 38,
+    isForSale: true,
+    price: 15000,
+    currency: 'RUB',
+    createdAt: '2023-09-05'
+  },
+  {
+    id: 'watercolor-3',
+    title: 'Акварельный портрет',
+    description: 'Портрет девушки, выполненный акварелью в мягком стиле',
+    images: ['https://images.pexels.com/photos/1212487/pexels-photo-1212487.jpeg?auto=compress&cs=tinysrgb&w=800&h=800&dpr=1'],
+    thumbnailUrl: 'https://images.pexels.com/photos/1212487/pexels-photo-1212487.jpeg?auto=compress&cs=tinysrgb&w=800&h=800&dpr=1',
+    artistId: '1',
+    artistName: 'Марина Иванова',
+    artistAvatar: 'https://i.pravatar.cc/150?img=36',
+    categories: ['Живопись', 'Портрет'],
+    tags: ['акварель', 'портрет', 'лицо'],
+    medium: 'Акварель',
+    likes: 410,
+    views: 1890,
+    comments: 57,
+    isForSale: true,
+    price: 25000,
+    currency: 'RUB',
+    createdAt: '2023-07-19'
   }
 ];
 
+// Объединим все доступные работы
+const ALL_AVAILABLE_ARTWORKS = [...MOCK_ARTWORKS, ...WATERCOLOR_ARTWORKS];
+
 // Моковые популярные теги
-const POPULAR_TAGS = ['живопись', 'акварель', 'скетчинг', 'портрет', 'пейзаж', 'диджитал'];
+const POPULAR_TAGS = ['акварель', 'живопись', 'скетчинг', 'портрет', 'пейзаж', 'диджитал'];
 
 type SearchTab = 'artworks' | 'artists' | 'tags';
 
 export default function ExploreScreen() {
+  const { tag } = useLocalSearchParams(); // Получаем тег из параметров URL
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<SearchTab>('artworks');
   const [isLoading, setIsLoading] = useState(false);
+  const [searchResults, setSearchResults] = useState<{ artworks: Artwork[], artists: User[], tags: string[] }>({
+    artworks: [],
+    artists: [],
+    tags: []
+  });
   const router = useRouter();
+  const { searchArtworks, allArtworks } = useArtworks(); // Используем функцию поиска из контекста
+  
+  // Применяем параметр тега при загрузке компонента
+  useEffect(() => {
+    if (tag && typeof tag === 'string') {
+      handleSearch(tag);
+      setActiveTab('artworks'); // Устанавливаем активную вкладку "Работы"
+    }
+  }, [tag]);
+  
+  // Модифицированная функция поиска, которая использует объединенные данные
+  const customSearchArtworks = (query: string): Artwork[] => {
+    if (!query.trim()) return ALL_AVAILABLE_ARTWORKS;
+    
+    const lowerQuery = query.toLowerCase();
+    // Проверяем, является ли запрос тегом (без #)
+    const isTagSearch = POPULAR_TAGS.some(tag => tag.toLowerCase() === lowerQuery);
+    
+    // Если это поиск по тегу, приоритезируем поиск по тегам
+    if (isTagSearch) {
+      console.log(`Поиск по тегу: ${lowerQuery}`);
+      return ALL_AVAILABLE_ARTWORKS.filter(artwork => 
+        artwork.tags.some(tag => tag.toLowerCase() === lowerQuery)
+      );
+    }
+    
+    // Сначала ищем в контексте
+    let results = searchArtworks(query);
+    
+    // Если результатов нет или их мало, добавляем результаты из моковых данных
+    if (results.length < 5) {
+      const mockResults = ALL_AVAILABLE_ARTWORKS.filter(artwork => 
+        artwork.title.toLowerCase().includes(lowerQuery) ||
+        artwork.description.toLowerCase().includes(lowerQuery) ||
+        artwork.artistName.toLowerCase().includes(lowerQuery) ||
+        artwork.medium?.toLowerCase().includes(lowerQuery) ||
+        artwork.tags.some(tag => tag.toLowerCase().includes(lowerQuery)) ||
+        artwork.categories.some(category => category.toLowerCase().includes(lowerQuery))
+      );
+      
+      // Объединяем результаты, удаляя дубликаты по ID
+      const combinedResults = [...results];
+      mockResults.forEach(mockArtwork => {
+        if (!combinedResults.some(art => art.id === mockArtwork.id)) {
+          combinedResults.push(mockArtwork);
+        }
+      });
+      
+      results = combinedResults;
+    }
+    
+    return results;
+  };
   
   // Имитация поиска с загрузкой
   const handleSearch = useCallback((query: string) => {
@@ -116,11 +203,61 @@ export default function ExploreScreen() {
     
     if (query.trim().length > 0) {
       setIsLoading(true);
+      
+      // Используем модифицированную функцию поиска работ
+      const artworksResults = customSearchArtworks(query);
+      
+      // Фильтруем художников по запросу (имитация)
+      const artistsResults = MOCK_ARTISTS.filter(artist => 
+        artist.displayName.toLowerCase().includes(query.toLowerCase()) ||
+        artist.username.toLowerCase().includes(query.toLowerCase()) ||
+        artist.bio.toLowerCase().includes(query.toLowerCase())
+      );
+      
+      // Фильтруем теги по запросу (имитация) и добавляем приоритетные теги
+      let tagsResults = POPULAR_TAGS.filter(tag => 
+        tag.toLowerCase().includes(query.toLowerCase())
+      );
+      
+      // Если запрос включает "аква", добавляем "акварель" в результаты тегов
+      if (query.toLowerCase().includes('аква') && !tagsResults.includes('акварель')) {
+        tagsResults = ['акварель', ...tagsResults];
+      }
+      
+      // Добавляем теги из найденных работ
+      const tagsFromArtworks = new Set<string>();
+      artworksResults.forEach(artwork => {
+        artwork.tags.forEach(tag => {
+          if (tag.toLowerCase().includes(query.toLowerCase())) {
+            tagsFromArtworks.add(tag);
+          }
+        });
+      });
+      
+      // Объединяем теги из работ с найденными тегами
+      tagsResults = [...new Set([...tagsResults, ...tagsFromArtworks])];
+      
       setTimeout(() => {
+        // Устанавливаем активную вкладку в зависимости от результатов поиска
+        if (artworksResults.length > 0) {
+          setActiveTab('artworks');
+        } else if (tagsResults.length > 0 && artworksResults.length === 0) {
+          setActiveTab('tags');
+        } else if (artistsResults.length > 0 && artworksResults.length === 0) {
+          setActiveTab('artists');
+        }
+        
+        setSearchResults({
+          artworks: artworksResults,
+          artists: artistsResults,
+          tags: tagsResults
+        });
         setIsLoading(false);
-      }, 800); // Имитация задержки сети
+      }, 500); // Небольшая имитация задержки сети
+    } else {
+      setSearchResults({ artworks: [], artists: [], tags: [] });
     }
-  }, []);
+  }, [searchArtworks, allArtworks]);
   
   const renderArtistItem = ({ item }: { item: User }) => (
     <TouchableOpacity 
@@ -159,15 +296,34 @@ export default function ExploreScreen() {
   );
 
   const renderTagItem = ({ item }: { item: string }) => (
-    <TouchableOpacity style={styles.tagItem}>
+    <TouchableOpacity 
+      style={styles.tagItem}
+      onPress={() => {
+        // При нажатии на тег выполняем поиск по нему и переключаемся на вкладку "Работы"
+        handleSearch(item);
+        setActiveTab('artworks');
+      }} 
+    >
       <FontAwesome name="hashtag" size={14} color="#0a7ea4" />
       <ThemedText style={styles.tagText}>{item}</ThemedText>
-      <ThemedText style={styles.tagCount}>1,245 работ</ThemedText>
+      <ThemedText style={styles.tagCount}>
+        {ALL_AVAILABLE_ARTWORKS.filter(art => 
+          art.tags.some(tag => tag.toLowerCase() === item.toLowerCase())
+        ).length} работ
+      </ThemedText>
     </TouchableOpacity>
   );
 
   const renderPopularTagItem = ({ item }: { item: string }) => (
-    <TouchableOpacity style={styles.tag}>
+    <TouchableOpacity 
+      style={styles.tag}
+      onPress={() => {
+        // При нажатии на популярный тег выполняем поиск по нему и переключаемся на вкладку "Работы"
+        handleSearch(item);
+        setActiveTab('artworks');
+      }}
+    >
+      <FontAwesome name="hashtag" size={14} color="#0a7ea4" style={styles.tagIcon} />
       <ThemedText style={styles.tagLabel}>#{item}</ThemedText>
     </TouchableOpacity>
   );
@@ -230,10 +386,36 @@ export default function ExploreScreen() {
     if (activeTab === 'artworks') {
       return (
         <FlatList
-          data={MOCK_ARTWORKS}
+          data={searchResults.artworks}
           renderItem={({ item }) => <ArtworkCard artwork={item} compact={false} />}
           keyExtractor={(item) => `explore-painting-${item.id}`}
           contentContainerStyle={styles.searchResults}
+          ListEmptyComponent={
+            <View style={styles.emptyResults}>
+              <FontAwesome name="search" size={48} color="#ddd" />
+              <ThemedText style={styles.emptyResultsText}>Нет результатов для "{searchQuery}"</ThemedText>
+              <TouchableOpacity 
+                style={styles.suggestButton}
+                onPress={() => {
+                  if (searchResults.tags.length > 0) {
+                    // Если есть теги, переключаемся на вкладку тегов
+                    setActiveTab('tags');
+                  } else if (searchResults.artists.length > 0) {
+                    // Если есть художники, переключаемся на вкладку художников
+                    setActiveTab('artists');
+                  }
+                }}
+              >
+                <ThemedText style={styles.suggestButtonText}>
+                  {searchResults.tags.length > 0 
+                    ? "Посмотреть похожие теги" 
+                    : searchResults.artists.length > 0 
+                      ? "Посмотреть художников" 
+                      : ""}
+                </ThemedText>
+              </TouchableOpacity>
+            </View>
+          }
         />
       );
     }
@@ -241,10 +423,16 @@ export default function ExploreScreen() {
     if (activeTab === 'artists') {
       return (
         <FlatList
-          data={MOCK_ARTISTS}
+          data={searchResults.artists}
           renderItem={renderArtistItem}
           keyExtractor={(item) => `explore-artist-${item.id}`}
           contentContainerStyle={styles.searchResults}
+          ListEmptyComponent={
+            <View style={styles.emptyResults}>
+              <FontAwesome name="user" size={48} color="#ddd" />
+              <ThemedText style={styles.emptyResultsText}>Нет художников для "{searchQuery}"</ThemedText>
+            </View>
+          }
         />
       );
     }
@@ -252,10 +440,16 @@ export default function ExploreScreen() {
     if (activeTab === 'tags') {
       return (
         <FlatList
-          data={POPULAR_TAGS}
+          data={searchResults.tags}
           renderItem={renderTagItem}
           keyExtractor={(item) => `explore-tag-${item}`}
           contentContainerStyle={styles.searchResults}
+          ListEmptyComponent={
+            <View style={styles.emptyResults}>
+              <FontAwesome name="hashtag" size={48} color="#ddd" />
+              <ThemedText style={styles.emptyResultsText}>Нет тегов для "{searchQuery}"</ThemedText>
+            </View>
+          }
         />
       );
     }
@@ -432,17 +626,25 @@ const styles = StyleSheet.create({
   tag: {
     backgroundColor: 'rgba(10, 126, 164, 0.1)',
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 8,
     borderRadius: 20,
     marginRight: 8,
     marginBottom: 8,
     flex: 1,
     minWidth: '30%',
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(10, 126, 164, 0.2)',
+  },
+  tagIcon: {
+    marginRight: 4,
   },
   tagLabel: {
     color: '#0a7ea4',
     fontSize: 14,
+    fontWeight: '500',
   },
   searchResults: {
     padding: 16,
@@ -522,6 +724,9 @@ const styles = StyleSheet.create({
     padding: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
+    borderRadius: 8,
+    backgroundColor: 'rgba(10, 126, 164, 0.05)',
+    marginBottom: 4,
   },
   tagText: {
     fontSize: 16,
@@ -533,6 +738,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#888',
     marginLeft: 'auto',
+    backgroundColor: 'rgba(10, 126, 164, 0.1)', 
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
   },
   loadingContainer: {
     flex: 1,
@@ -554,5 +763,30 @@ const styles = StyleSheet.create({
   },
   artworksList: {
     paddingHorizontal: 16,
+  },
+  emptyResults: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    marginTop: 50,
+  },
+  emptyResultsText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#888',
+    textAlign: 'center',
+  },
+  suggestButton: {
+    backgroundColor: '#0a7ea4',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 16,
+    marginTop: 10,
+  },
+  suggestButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

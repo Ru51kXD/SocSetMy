@@ -225,6 +225,15 @@ export default function ArtworkDetailScreen() {
     }
   };
 
+  // Обработчик нажатия на тег
+  const handleTagPress = (tag: string) => {
+    // Переходим на экран поиска с параметром тега
+    router.push({
+      pathname: '/(tabs)/explore',
+      params: { tag }
+    });
+  };
+
   if (isLoading) {
     return (
       <ThemedView style={styles.loadingContainer}>
@@ -323,9 +332,13 @@ export default function ArtworkDetailScreen() {
           {artwork.tags && artwork.tags.length > 0 && (
             <View style={styles.tagsContainer}>
               {artwork.tags.map((tag, index) => (
-                <View key={`tag-${index}`} style={styles.tag}>
+                <TouchableOpacity 
+                  key={`tag-${index}`} 
+                  style={styles.tag}
+                  onPress={() => handleTagPress(tag)}
+                >
                   <ThemedText style={styles.tagText}>#{tag}</ThemedText>
-                </View>
+                </TouchableOpacity>
               ))}
             </View>
           )}

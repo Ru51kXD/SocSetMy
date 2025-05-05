@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Image, TouchableOpacity, Dimensions, Modal, FlatList, ActivityIndicator } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, usePathname } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -20,8 +20,12 @@ interface ArtworkCardProps {
 const { width } = Dimensions.get('window');
 const cardWidth = width / 2 - 24; // Две карточки в ряду с учетом отступов
 
+// Глобальный кэш неработающих URL изображений для предотвращения повторных попыток загрузки
+const failedImageUrls = new Set();
+
 export function ArtworkCard({ artwork, artworkId, compact = false, onContactRequest }: ArtworkCardProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { threads, shareArtwork, setActiveChat, hasThreadWithArtist, addMessage } = useMessages();
   const { isArtworkLiked, isArtworkSaved, likeArtwork, unlikeArtwork, saveArtwork, unsaveArtwork } = useUserPreferences();
   const [isShareModalVisible, setIsShareModalVisible] = useState(false);
@@ -45,12 +49,20 @@ export function ArtworkCard({ artwork, artworkId, compact = false, onContactRequ
     setSaved(isArtworkSaved(artwork.id));
   }, [artwork.id, isArtworkLiked, isArtworkSaved]);
 
+  // Проверяем URL при инициализации, если он уже в списке ошибок
+  useEffect(() => {
+    if (artwork.thumbnailUrl && failedImageUrls.has(artwork.thumbnailUrl)) {
+      setImageLoading(false);
+      setImageError(true);
+    }
+  }, [artwork.thumbnailUrl]);
+
   // Функция для отображения запасного изображения
   const getBackupImageUrl = () => {
     // Проверка, что у работы есть название для использования в запасном изображении
     const safeTitle = artwork.title ? encodeURIComponent(artwork.title) : 'artwork';
     // Используем более надежный сервис для запасных изображений
-    return `https://via.placeholder.com/800x800/${getColorForArtwork()}/ffffff?text=${safeTitle}`;
+    return `https://ui-avatars.com/api/?name=${safeTitle}&size=200&background=${getColorForArtwork()}&color=ffffff`;
   };
 
   // Функция для генерации цвета на основе ID работы
@@ -65,7 +77,16 @@ export function ArtworkCard({ artwork, artworkId, compact = false, onContactRequ
   };
 
   const handleImageError = () => {
-    console.log(`Ошибка загрузки изображения: ${artwork.thumbnailUrl}`);
+    // Добавляем URL в список неработающих, чтобы не пытаться загружать его снова
+    if (artwork.thumbnailUrl) {
+      failedImageUrls.add(artwork.thumbnailUrl);
+    }
+    
+    // Логируем ошибку только если это не повторная попытка загрузки этого URL
+    if (!imageError) {
+      console.log(`Ошибка загрузки изображения: ${artwork.thumbnailUrl}`);
+    }
+    
     setImageLoading(false);
     setImageError(true);
   };
@@ -209,6 +230,16 @@ export function ArtworkCard({ artwork, artworkId, compact = false, onContactRequ
     }
   };
 
+  const handleTagPress = (tag: string, e: any) => {
+    e.stopPropagation();
+    
+    // Переходим на экран поиска с параметром тега
+    router.push({
+      pathname: '/(tabs)/explore',
+      params: { tag }
+    });
+  };
+
   const renderArtistItem = ({ item }: { item: User }) => (
     <TouchableOpacity 
       style={styles.artistItem} 
@@ -225,21 +256,19 @@ export function ArtworkCard({ artwork, artworkId, compact = false, onContactRequ
 
   if (compact) {
     // Проверяем, есть ли URL изображения перед рендерингом
-    if (!artwork.thumbnailUrl || artwork.thumbnailUrl.trim() === '') {
-      return null; // Не рендерим карточку, если URL отсутствует
-    }
+    const shouldUseBackupImage = imageError || !artwork.thumbnailUrl || artwork.thumbnailUrl.trim() === '' || failedImageUrls.has(artwork.thumbnailUrl);
     
     return (
       <TouchableOpacity style={styles.compactCard} onPress={handlePress}>
         <View style={styles.compactImageContainer}>
-          {imageLoading && (
+          {imageLoading && !shouldUseBackupImage && (
             <View style={[styles.compactImage, styles.imagePlaceholder]}>
               <ActivityIndicator size="small" color="#0a7ea4" />
             </View>
           )}
           <Image 
-            source={{ uri: imageError ? getBackupImageUrl() : artwork.thumbnailUrl }} 
-            style={[styles.compactImage, imageLoading && styles.hiddenImage]} 
+            source={{ uri: shouldUseBackupImage ? getBackupImageUrl() : artwork.thumbnailUrl }} 
+            style={[styles.compactImage, imageLoading && !shouldUseBackupImage && styles.hiddenImage]} 
             onLoad={handleImageLoad}
             onError={handleImageError}
           />
@@ -253,9 +282,27 @@ export function ArtworkCard({ artwork, artworkId, compact = false, onContactRequ
           </View>
         </View>
         <ThemedText style={styles.compactTitle} numberOfLines={1}>{artwork.title}</ThemedText>
+        
+        {/* Отображаем теги для неком пактного режима */}
+        {!compact && artwork.tags && artwork.tags.length > 0 && (
+          <View style={styles.tagsContainer}>
+            {artwork.tags.slice(0, 3).map((tag, index) => (
+              <TouchableOpacity 
+                key={`artwork-tag-${index}`} 
+                style={styles.tag}
+                onPress={(e) => handleTagPress(tag, e)}
+              >
+                <ThemedText style={styles.tagText}>#{tag}</ThemedText>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </TouchableOpacity>
     );
   }
+
+  // Проверяем, следует ли использовать запасное изображение
+  const shouldUseBackupImage = imageError || !artwork.thumbnailUrl || artwork.thumbnailUrl.trim() === '' || failedImageUrls.has(artwork.thumbnailUrl);
 
   return (
     <>
@@ -265,14 +312,14 @@ export function ArtworkCard({ artwork, artworkId, compact = false, onContactRequ
         activeOpacity={0.8}
       >
         <View style={styles.imageContainer}>
-          {imageLoading && (
+          {imageLoading && !shouldUseBackupImage && (
             <View style={[styles.image, styles.imagePlaceholder]}>
               <ActivityIndicator size="large" color="#0a7ea4" />
             </View>
           )}
           <Image 
-            source={{ uri: imageError ? getBackupImageUrl() : artwork.thumbnailUrl }} 
-            style={[styles.image, imageLoading && styles.hiddenImage]} 
+            source={{ uri: shouldUseBackupImage ? getBackupImageUrl() : artwork.thumbnailUrl }} 
+            style={[styles.image, imageLoading && !shouldUseBackupImage && styles.hiddenImage]} 
             onLoad={handleImageLoad}
             onError={handleImageError}
           />
@@ -331,6 +378,21 @@ export function ArtworkCard({ artwork, artworkId, compact = false, onContactRequ
             </View>
           )}
         </ThemedView>
+        
+        {/* Отображаем теги для неком пактного режима */}
+        {!compact && artwork.tags && artwork.tags.length > 0 && (
+          <View style={styles.tagsContainer}>
+            {artwork.tags.slice(0, 3).map((tag, index) => (
+              <TouchableOpacity 
+                key={`artwork-tag-${index}`} 
+                style={styles.tag}
+                onPress={(e) => handleTagPress(tag, e)}
+              >
+                <ThemedText style={styles.tagText}>#{tag}</ThemedText>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </TouchableOpacity>
 
       {/* Модальное окно для выбора, с кем поделиться */}
@@ -609,5 +671,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#888',
     textAlign: 'center',
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    marginTop: 8,
+  },
+  tag: {
+    padding: 4,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 4,
+    marginRight: 4,
+  },
+  tagText: {
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 }); 
