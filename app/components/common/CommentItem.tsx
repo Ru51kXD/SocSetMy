@@ -69,8 +69,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    backgroundColor: '#fff',
+    minHeight: 80, // Минимальная высота для комментария
   },
   avatar: {
     width: 36,
@@ -80,12 +80,13 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
+    justifyContent: 'space-between',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   username: {
     fontWeight: '600',
@@ -99,6 +100,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     marginBottom: 8,
+    flexWrap: 'wrap', // Позволяет тексту переноситься
   },
   actions: {
     flexDirection: 'row',

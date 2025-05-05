@@ -6,6 +6,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import { Comment } from '@/app/models/types';
 import { CommentItem } from './CommentItem';
 import { ARTISTS } from '@/app/data/artworks';
+import { useAuth } from '@/app/context/AuthContext';
 
 // Импортируем массив шаблонных комментариев
 const COMMENT_TEMPLATES = [
@@ -38,16 +39,25 @@ const getRandomRecentDate = (): string => {
 
 // Функция для генерации случайных комментариев
 const generateRandomComments = (artworkId: string, count: number): Comment[] => {
+  // Убираем ограничение количества комментариев
   return Array.from({ length: count }, (_, index) => {
     const artist = ARTISTS[Math.floor(Math.random() * ARTISTS.length)];
+    // Выбираем немного более короткие комментарии для мобильного отображения
+    const templateIndex = Math.floor(Math.random() * COMMENT_TEMPLATES.length);
+    let commentText = COMMENT_TEMPLATES[templateIndex];
+    
+    // Если комментарий слишком длинный, обрезаем его
+    if (commentText.length > 120) {
+      commentText = commentText.substring(0, 120) + '...';
+    }
     
     return {
       id: `comment-${artworkId}-${index}`,
       artworkId,
       userId: artist.id,
       username: artist.name,
-      userAvatar: artist.avatar,
-      content: COMMENT_TEMPLATES[Math.floor(Math.random() * COMMENT_TEMPLATES.length)],
+      userAvatar: artist.avatar, 
+      content: commentText,
       likes: Math.floor(Math.random() * 10),
       createdAt: getRandomRecentDate()
     };
@@ -63,6 +73,7 @@ export function CommentsSection({ artworkId, commentCount }: CommentsSectionProp
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [newComment, setNewComment] = useState('');
+  const { user } = useAuth(); // Получаем данные текущего пользователя
   
   // Генерируем комментарии при первой загрузке компонента
   useEffect(() => {
@@ -86,13 +97,16 @@ export function CommentsSection({ artworkId, commentCount }: CommentsSectionProp
   const handleSubmitComment = () => {
     if (!newComment.trim()) return;
     
-    // Создаем новый комментарий
+    // Безопасный URL аватара по умолчанию
+    const defaultAvatarUrl = 'https://i.pravatar.cc/150?img=12';
+    
+    // Создаем новый комментарий с аватаром текущего пользователя
     const newCommentObj: Comment = {
       id: `comment-${artworkId}-${Date.now()}`,
       artworkId,
-      userId: '0', // ID текущего пользователя
-      username: 'Вы', // Имя текущего пользователя
-      userAvatar: 'https://i.pravatar.cc/150?img=8', // Аватар текущего пользователя
+      userId: user?.id || '0', // ID текущего пользователя
+      username: user?.displayName || 'Вы', // Имя текущего пользователя
+      userAvatar: user?.avatar || defaultAvatarUrl, // Используем аватар из профиля пользователя или дефолтный
       content: newComment,
       likes: 0,
       createdAt: new Date().toISOString()
@@ -148,18 +162,17 @@ export function CommentsSection({ artworkId, commentCount }: CommentsSectionProp
           </ThemedText>
         </View>
       ) : (
-        <FlatList
-          data={comments}
-          renderItem={({ item }) => <CommentItem comment={item} />}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.commentsList}
-          initialNumToRender={5}
-          maxToRenderPerBatch={10}
-          windowSize={5}
-          removeClippedSubviews={true}
-          // Важный параметр для вложенных списков
-          nestedScrollEnabled={true}
-        />
+        <View>
+          <ThemedText style={styles.commentsCountText}>Всего комментариев: {comments.length}</ThemedText>
+          <View style={styles.commentsList}>
+            {comments.map((comment, index) => (
+              <View key={comment.id}>
+                <CommentItem comment={comment} />
+                {index < comments.length - 1 && <View style={styles.separator} />}
+              </View>
+            ))}
+          </View>
+        </View>
       )}
     </ThemedView>
   );
@@ -170,9 +183,8 @@ export default CommentsSection;
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
+    backgroundColor: '#fff',
+    paddingBottom: 16,
   },
   header: {
     paddingHorizontal: 16,
@@ -191,6 +203,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
+    marginBottom: 8,
   },
   commentInput: {
     flex: 1,
@@ -214,14 +227,11 @@ const styles = StyleSheet.create({
   disabledButton: {
     backgroundColor: '#eee',
   },
-  commentsList: {
-    paddingBottom: 16,
-  },
   loadingContainer: {
-    flex: 1,
     padding: 24,
     justifyContent: 'center',
     alignItems: 'center',
+    height: 200,
   },
   loadingText: {
     marginTop: 12,
@@ -229,15 +239,32 @@ const styles = StyleSheet.create({
     color: '#888',
   },
   emptyCommentsContainer: {
-    flex: 1,
     padding: 24,
     justifyContent: 'center',
     alignItems: 'center',
+    height: 200,
   },
   emptyCommentsText: {
     marginTop: 16,
     fontSize: 16,
     color: '#888',
     textAlign: 'center',
+  },
+  commentsList: {
+    paddingBottom: 16,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: '#f0f0f0',
+    marginHorizontal: 16,
+  },
+  commentsCountText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#666',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#f5f5f5',
+    marginBottom: 8,
   },
 }); 

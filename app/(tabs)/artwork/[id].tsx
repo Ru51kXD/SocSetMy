@@ -247,94 +247,94 @@ export default function ArtworkDetailScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <View style={styles.mainContent}>
-        <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollContainer}>
-          <View style={styles.imageContainer}>
-            {isImageLoading && (
-              <View style={styles.imagePlaceholder}>
-                <ActivityIndicator size="large" color="#0a7ea4" />
-              </View>
-            )}
-            <Image 
-              source={{ uri: imageError ? getBackupImageUrl() : artwork.images[0] }}
-              style={styles.image}
-              onLoad={handleImageLoad}
-              onError={handleImageError}
-            />
-          </View>
+      <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollContainer}>
+        <View style={styles.imageContainer}>
+          {isImageLoading && (
+            <View style={styles.imagePlaceholder}>
+              <ActivityIndicator size="large" color="#0a7ea4" />
+            </View>
+          )}
+          <Image 
+            source={{ uri: imageError ? getBackupImageUrl() : artwork.images[0] }}
+            style={styles.image}
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+          />
+        </View>
 
-          <View style={styles.contentContainer}>
-            <ThemedText style={styles.title}>{artwork.title}</ThemedText>
-            
-            <TouchableOpacity style={styles.artistRow} onPress={handleArtistPress}>
-              <Image source={{ uri: artwork.artistAvatar }} style={styles.avatar} />
-              <ThemedText style={styles.artistName}>{artwork.artistName}</ThemedText>
+        <View style={styles.contentContainer}>
+          <ThemedText style={styles.title}>{artwork.title}</ThemedText>
+          
+          <TouchableOpacity style={styles.artistRow} onPress={handleArtistPress}>
+            <Image source={{ uri: artwork.artistAvatar }} style={styles.avatar} />
+            <ThemedText style={styles.artistName}>{artwork.artistName}</ThemedText>
+          </TouchableOpacity>
+          
+          <View style={styles.statsRow}>
+            <TouchableOpacity style={styles.stat} onPress={handleLikeToggle}>
+              <FontAwesome 
+                name={isLiked ? "heart" : "heart-o"} 
+                size={18} 
+                color={isLiked ? "#FF4151" : "#666"} 
+              />
+              <ThemedText style={styles.statText}>{artwork.likes + (isLiked ? 1 : 0)}</ThemedText>
             </TouchableOpacity>
-            
-            <View style={styles.statsRow}>
-              <TouchableOpacity style={styles.stat} onPress={handleLikeToggle}>
-                <FontAwesome 
-                  name={isLiked ? "heart" : "heart-o"} 
-                  size={18} 
-                  color={isLiked ? "#FF4151" : "#666"} 
-                />
-                <ThemedText style={styles.statText}>{artwork.likes + (isLiked ? 1 : 0)}</ThemedText>
-              </TouchableOpacity>
-              <View style={styles.stat}>
-                <FontAwesome name="eye" size={18} color="#666" />
-                <ThemedText style={styles.statText}>{artwork.views}</ThemedText>
-              </View>
-              <View style={styles.stat}>
-                <FontAwesome name="comment-o" size={18} color="#666" />
-                <ThemedText style={styles.statText}>{artwork.comments}</ThemedText>
-              </View>
-              <TouchableOpacity style={styles.stat} onPress={handleSaveToggle}>
-                <FontAwesome 
-                  name={isSaved ? "bookmark" : "bookmark-o"} 
-                  size={18} 
-                  color={isSaved ? "#0a7ea4" : "#666"} 
-                />
-                <ThemedText style={styles.statText}>Сохранить</ThemedText>
-              </TouchableOpacity>
+            <View style={styles.stat}>
+              <FontAwesome name="eye" size={18} color="#666" />
+              <ThemedText style={styles.statText}>{artwork.views}</ThemedText>
             </View>
-            
-            <ThemedText style={styles.description}>{artwork.description}</ThemedText>
-            
-            <View style={styles.detailsContainer}>
-              <View style={styles.detailRow}>
-                <ThemedText style={styles.detailLabel}>Категория:</ThemedText>
-                <ThemedText style={styles.detailValue}>{artwork.categories.join(', ')}</ThemedText>
-              </View>
-              <View style={styles.detailRow}>
-                <ThemedText style={styles.detailLabel}>Техника:</ThemedText>
-                <ThemedText style={styles.detailValue}>{artwork.medium}</ThemedText>
-              </View>
-              {artwork.dimensions && (
-                <View style={styles.detailRow}>
-                  <ThemedText style={styles.detailLabel}>Размеры:</ThemedText>
-                  <ThemedText style={styles.detailValue}>{artwork.dimensions}</ThemedText>
-                </View>
-              )}
-              <View style={styles.detailRow}>
-                <ThemedText style={styles.detailLabel}>Дата создания:</ThemedText>
-                <ThemedText style={styles.detailValue}>{artwork.createdAt}</ThemedText>
-              </View>
+            <View style={styles.stat}>
+              <FontAwesome name="comment-o" size={18} color="#666" />
+              <ThemedText style={styles.statText}>{artwork.comments}</ThemedText>
             </View>
-            
-            {artwork.tags && artwork.tags.length > 0 && (
-              <View style={styles.tagsContainer}>
-                {artwork.tags.map((tag, index) => (
-                  <View key={`tag-${index}`} style={styles.tag}>
-                    <ThemedText style={styles.tagText}>#{tag}</ThemedText>
-                  </View>
-                ))}
-              </View>
-            )}
+            <TouchableOpacity style={styles.stat} onPress={handleSaveToggle}>
+              <FontAwesome 
+                name={isSaved ? "bookmark" : "bookmark-o"} 
+                size={18} 
+                color={isSaved ? "#0a7ea4" : "#666"} 
+              />
+              <ThemedText style={styles.statText}>Сохранить</ThemedText>
+            </TouchableOpacity>
           </View>
           
-          <CommentsSection artworkId={artwork.id} />
-        </ScrollView>
-      </View>
+          <ThemedText style={styles.description}>{artwork.description}</ThemedText>
+          
+          <View style={styles.detailsContainer}>
+            <View style={styles.detailRow}>
+              <ThemedText style={styles.detailLabel}>Категория:</ThemedText>
+              <ThemedText style={styles.detailValue}>{artwork.categories.join(', ')}</ThemedText>
+            </View>
+            <View style={styles.detailRow}>
+              <ThemedText style={styles.detailLabel}>Техника:</ThemedText>
+              <ThemedText style={styles.detailValue}>{artwork.medium}</ThemedText>
+            </View>
+            {artwork.dimensions && (
+              <View style={styles.detailRow}>
+                <ThemedText style={styles.detailLabel}>Размеры:</ThemedText>
+                <ThemedText style={styles.detailValue}>{artwork.dimensions}</ThemedText>
+              </View>
+            )}
+            <View style={styles.detailRow}>
+              <ThemedText style={styles.detailLabel}>Дата создания:</ThemedText>
+              <ThemedText style={styles.detailValue}>{artwork.createdAt}</ThemedText>
+            </View>
+          </View>
+          
+          {artwork.tags && artwork.tags.length > 0 && (
+            <View style={styles.tagsContainer}>
+              {artwork.tags.map((tag, index) => (
+                <View key={`tag-${index}`} style={styles.tag}>
+                  <ThemedText style={styles.tagText}>#{tag}</ThemedText>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+        
+        <View style={styles.commentsSection}>
+          <CommentsSection artworkId={artwork.id} commentCount={artwork.comments} />
+        </View>
+      </ScrollView>
       
       {artwork.isForSale && (
         <View style={styles.footer}>
@@ -528,5 +528,11 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  commentsSection: {
+    marginTop: 16,
+    marginBottom: 80,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
   },
 }); 
