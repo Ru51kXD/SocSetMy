@@ -12,6 +12,7 @@ import { useUserPreferences } from '@/app/context/UserPreferencesContext';
 
 interface ArtworkCardProps {
   artwork: Artwork;
+  artworkId?: string;
   compact?: boolean;
   onContactRequest?: (artwork: Artwork) => void;
 }
@@ -19,7 +20,7 @@ interface ArtworkCardProps {
 const { width } = Dimensions.get('window');
 const cardWidth = width / 2 - 24; // Две карточки в ряду с учетом отступов
 
-export function ArtworkCard({ artwork, compact = false, onContactRequest }: ArtworkCardProps) {
+export function ArtworkCard({ artwork, artworkId, compact = false, onContactRequest }: ArtworkCardProps) {
   const router = useRouter();
   const { threads, shareArtwork, setActiveChat, hasThreadWithArtist, addMessage } = useMessages();
   const { isArtworkLiked, isArtworkSaved, likeArtwork, unlikeArtwork, saveArtwork, unsaveArtwork } = useUserPreferences();
@@ -70,7 +71,9 @@ export function ArtworkCard({ artwork, compact = false, onContactRequest }: Artw
   };
 
   const handlePress = () => {
-    router.push(`/artwork/${artwork.id}`);
+    // Используем переданный artworkId, если он есть, иначе используем id из объекта artwork
+    const id = artworkId || artwork.id;
+    router.push(`/artwork/${id}`);
   };
 
   const handleArtistPress = (e: any) => {

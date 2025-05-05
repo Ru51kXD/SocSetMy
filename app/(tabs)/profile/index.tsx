@@ -357,7 +357,7 @@ export default function ProfileScreen() {
                     key={`${activeTab}-artwork-left-${item.id}`}
                     style={styles.artworkItem}
                   >
-                    <ArtworkCard artwork={item} compact={true} />
+                    <ArtworkCard artwork={item} artworkId={item.id} compact={true} />
                   </View>
                 ))}
               </View>
@@ -368,7 +368,7 @@ export default function ProfileScreen() {
                     key={`${activeTab}-artwork-right-${item.id}`}
                     style={styles.artworkItem}
                   >
-                    <ArtworkCard artwork={item} compact={true} />
+                    <ArtworkCard artwork={item} artworkId={item.id} compact={true} />
                   </View>
                 ))}
               </View>

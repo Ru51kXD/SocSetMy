@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { StyleSheet, ScrollView, View, TouchableOpacity, TextInput, Image } from 'react-native';
+import { StyleSheet, ScrollView, View, TouchableOpacity, TextInput, Image, Alert, ActivityIndicator } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { useAuth } from '@/app/context/AuthContext';
+import { useArtworks } from '@/app/context/ArtworkContext';
+import { Artwork } from '@/app/models/types';
 
 type ImageInfo = {
   uri: string;
@@ -15,6 +18,9 @@ type ImageInfo = {
 
 export default function UploadScreen() {
   const router = useRouter();
+  const { user } = useAuth();
+  const { addArtwork } = useArtworks();
+  
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [selectedImages, setSelectedImages] = useState<ImageInfo[]>([]);
@@ -24,17 +30,32 @@ export default function UploadScreen() {
   const [dimensions, setDimensions] = useState('');
   const [isForSale, setIsForSale] = useState(false);
   const [price, setPrice] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const pickImage = async () => {
-    // No permissions request is necessary for launching the image library
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsMultipleSelection: true,
-      quality: 1,
-    });
-    
-    if (!result.canceled) {
-      setSelectedImages(result.assets);
+    try {
+      // Запрашиваем разрешение
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert('Ошибка', 'Для выбора изображения требуется доступ к галерее');
+        return;
+      }
+      
+      // Запускаем выбор изображения
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsMultipleSelection: true,
+        quality: 0.8,
+      });
+      
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        console.log("Выбранные изображения:", result.assets);
+        setSelectedImages(result.assets);
+      }
+    } catch (error) {
+      console.error("Ошибка при выборе изображения:", error);
+      Alert.alert('Ошибка', 'Произошла ошибка при выборе изображения');
     }
   };
   
@@ -44,35 +65,81 @@ export default function UploadScreen() {
     setSelectedImages(newImages);
   };
   
-  const handleSubmit = () => {
-    // В реальном приложении здесь была бы логика отправки данных на сервер
-    console.log({
-      title,
-      description,
-      images: selectedImages,
-      category,
-      tags: tags.split(',').map(tag => tag.trim()),
-      medium,
-      dimensions,
-      isForSale,
-      price: isForSale ? parseFloat(price) : undefined
-    });
-    
-    alert('Работа успешно загружена!');
-    
-    // Очистка формы
-    setTitle('');
-    setDescription('');
-    setSelectedImages([]);
-    setCategory('');
-    setTags('');
-    setMedium('');
-    setDimensions('');
-    setIsForSale(false);
-    setPrice('');
-    
-    // Перенаправление на экран профиля
-    router.push('/profile');
+  const handleSubmit = async () => {
+    if (!user) {
+      Alert.alert('Ошибка', 'Необходимо войти в аккаунт для загрузки работ');
+      return;
+    }
+
+    if (!title.trim()) {
+      Alert.alert('Ошибка', 'Пожалуйста, укажите название работы');
+      return;
+    }
+
+    if (selectedImages.length === 0) {
+      Alert.alert('Ошибка', 'Пожалуйста, выберите хотя бы одно изображение для работы');
+      return;
+    }
+
+    if (!category.trim()) {
+      Alert.alert('Ошибка', 'Пожалуйста, укажите категорию работы');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      
+      const tagsList = tags.split(',').map(tag => tag.trim()).filter(tag => tag !== '');
+      
+      const newArtwork: Artwork = {
+        id: `artwork-${Date.now()}`,
+        title: title.trim(),
+        description: description.trim(),
+        images: selectedImages.map(img => img.uri),
+        thumbnailUrl: selectedImages[0].uri,
+        artistId: user.id,
+        artistName: user.displayName,
+        artistAvatar: user.avatar,
+        categories: [category.trim()],
+        tags: tagsList,
+        medium: medium.trim(),
+        dimensions: dimensions.trim(),
+        likes: 0,
+        views: 0,
+        comments: 0,
+        isForSale: isForSale,
+        price: isForSale ? parseFloat(price) : undefined,
+        currency: isForSale ? 'RUB' : undefined,
+        createdAt: new Date().toISOString().split('T')[0]
+      };
+      
+      await addArtwork(newArtwork);
+      
+      Alert.alert(
+        'Успех',
+        'Работа успешно загружена',
+        [{ text: 'OK', onPress: () => {
+          // Очистка формы
+          setTitle('');
+          setDescription('');
+          setSelectedImages([]);
+          setCategory('');
+          setTags('');
+          setMedium('');
+          setDimensions('');
+          setIsForSale(false);
+          setPrice('');
+          
+          // Перенаправление на экран профиля
+          router.push('/(tabs)/profile');
+        }}]
+      );
+    } catch (error) {
+      console.error('Ошибка при загрузке работы:', error);
+      Alert.alert('Ошибка', 'Не удалось загрузить работу. Пожалуйста, попробуйте еще раз.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   return (
@@ -202,12 +269,17 @@ export default function UploadScreen() {
         <TouchableOpacity 
           style={[
             styles.submitButton,
-            (!title || !category || selectedImages.length === 0) && styles.submitButtonDisabled
+            (isSubmitting || !title || !category || selectedImages.length === 0) && styles.submitButtonDisabled
           ]}
           onPress={handleSubmit}
-          disabled={!title || !category || selectedImages.length === 0}
+          disabled={isSubmitting || !title || !category || selectedImages.length === 0}
         >
-          <ThemedText style={styles.submitButtonText}>Опубликовать</ThemedText>
+          <View style={styles.submitButtonContent}>
+            {isSubmitting && <ActivityIndicator size="small" color="#fff" style={styles.submitButtonLoader} />}
+            <ThemedText style={styles.submitButtonText}>
+              {isSubmitting ? 'Загрузка...' : 'Опубликовать'}
+            </ThemedText>
+          </View>
         </TouchableOpacity>
       </ThemedView>
     </ScrollView>
@@ -341,5 +413,13 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  submitButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  submitButtonLoader: {
+    marginRight: 8,
   },
 }); 

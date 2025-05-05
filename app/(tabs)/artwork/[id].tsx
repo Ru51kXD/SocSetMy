@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Image, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { StyleSheet, View, Image, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
@@ -10,15 +10,20 @@ import { ContactArtistModal } from '@/app/components/common/ContactArtistModal';
 import { useMessages } from '@/app/context/MessageContext';
 import { useUserPreferences } from '@/app/context/UserPreferencesContext';
 import { CommentsSection } from '@/app/components/common/CommentsSection';
+import { useArtworks } from '@/app/context/ArtworkContext';
 
 const { width } = Dimensions.get('window');
 
 export default function ArtworkDetailScreen() {
   const { id } = useLocalSearchParams();
+  const artworkId = typeof id === 'string' ? id : '';
   const router = useRouter();
   const [artwork, setArtwork] = useState<Artwork | null>(null);
   const [isContactModalVisible, setIsContactModalVisible] = useState(false);
   const [artist, setArtist] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isImageLoading, setIsImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
   const { setActiveChat, hasThreadWithArtist, shareArtwork, addMessage } = useMessages();
   const { 
     isArtworkLiked, 
@@ -28,38 +33,83 @@ export default function ArtworkDetailScreen() {
     saveArtwork, 
     unsaveArtwork 
   } = useUserPreferences();
+  const { allArtworks } = useArtworks();
   
   // Состояние лайка и сохранения
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
+  // Функция для обработки ошибок загрузки изображений
+  const handleImageError = () => {
+    console.log(`Ошибка загрузки изображения для работы ${artworkId}`);
+    setImageError(true);
+    setIsImageLoading(false);
+  };
+
+  const handleImageLoad = () => {
+    setIsImageLoading(false);
+  };
+
+  // Функция для получения запасного изображения
+  const getBackupImageUrl = () => {
+    if (!artwork) return '';
+    const safeTitle = artwork.title ? encodeURIComponent(artwork.title) : 'artwork';
+    // Генерируем цвет на основе ID работы
+    const colors = ['1a73e8', 'ff4151', '0a7ea4', '388e3c', '7b1fa2', 'fb8c00'];
+    const numId = parseInt(artwork.id.replace(/\D/g, '') || '1');
+    const color = colors[numId % colors.length];
+    return `https://via.placeholder.com/800x800/${color}/ffffff?text=${safeTitle}`;
+  };
+
   useEffect(() => {
-    // Находим работу по ID из параметров URL
-    const foundArtwork = MOCK_ARTWORKS.find(item => item.id === id);
-    if (foundArtwork) {
-      setArtwork(foundArtwork);
+    setIsLoading(true);
+    setImageError(false);
+    setIsImageLoading(true);
+    
+    try {
+      // Сначала ищем в пользовательских работах (из контекста)
+      let foundArtwork = allArtworks.find(item => item.id === artworkId);
       
-      // Создаем объект художника из данных работы
-      setArtist({
-        id: foundArtwork.artistId,
-        username: foundArtwork.artistName.toLowerCase().replace(/\s+/g, '_'),
-        displayName: foundArtwork.artistName,
-        avatar: foundArtwork.artistAvatar,
-        bio: '',
-        artStyles: [],
-        followers: 0,
-        following: 0,
-        createdAt: '',
-        socialLinks: {}
-      });
-      
-      // Проверяем статус лайка и сохранения
-      if (foundArtwork.id) {
-        setIsLiked(isArtworkLiked(foundArtwork.id));
-        setIsSaved(isArtworkSaved(foundArtwork.id));
+      // Если не найдено в пользовательских, ищем в моковых данных
+      if (!foundArtwork) {
+        foundArtwork = MOCK_ARTWORKS.find(item => item.id === artworkId);
       }
+      
+      if (foundArtwork) {
+        console.log(`Найдена работа: ${foundArtwork.title}`);
+        setArtwork(foundArtwork);
+        
+        // Создаем объект художника из данных работы
+        setArtist({
+          id: foundArtwork.artistId,
+          username: foundArtwork.artistName.toLowerCase().replace(/\s+/g, '_'),
+          displayName: foundArtwork.artistName,
+          avatar: foundArtwork.artistAvatar,
+          bio: '',
+          artStyles: [],
+          followers: 0,
+          following: 0,
+          createdAt: '',
+          socialLinks: {}
+        });
+        
+        // Проверяем статус лайка и сохранения
+        if (foundArtwork.id) {
+          setIsLiked(isArtworkLiked(foundArtwork.id));
+          setIsSaved(isArtworkSaved(foundArtwork.id));
+        }
+      } else {
+        console.error(`Работа с ID ${artworkId} не найдена`);
+        Alert.alert('Ошибка', 'Не удалось найти работу', [
+          { text: 'OK', onPress: () => router.back() }
+        ]);
+      }
+    } catch (error) {
+      console.error('Ошибка при загрузке работы:', error);
+    } finally {
+      setIsLoading(false);
     }
-  }, [id, isArtworkLiked, isArtworkSaved]);
+  }, [artworkId, isArtworkLiked, isArtworkSaved, allArtworks]);
 
   const handleArtistPress = () => {
     if (artwork) {
@@ -175,10 +225,22 @@ export default function ArtworkDetailScreen() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <ThemedView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0a7ea4" />
+        <ThemedText style={styles.loadingText}>Загрузка работы...</ThemedText>
+      </ThemedView>
+    );
+  }
+
   if (!artwork) {
     return (
       <ThemedView style={styles.loadingContainer}>
-        <ThemedText>Загрузка...</ThemedText>
+        <ThemedText>Работа не найдена</ThemedText>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <ThemedText style={styles.backButtonText}>Вернуться назад</ThemedText>
+        </TouchableOpacity>
       </ThemedView>
     );
   }
@@ -187,7 +249,19 @@ export default function ArtworkDetailScreen() {
     <ThemedView style={styles.container}>
       <View style={styles.mainContent}>
         <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollContainer}>
-          <Image source={{ uri: artwork.images[0] }} style={styles.image} />
+          <View style={styles.imageContainer}>
+            {isImageLoading && (
+              <View style={styles.imagePlaceholder}>
+                <ActivityIndicator size="large" color="#0a7ea4" />
+              </View>
+            )}
+            <Image 
+              source={{ uri: imageError ? getBackupImageUrl() : artwork.images[0] }}
+              style={styles.image}
+              onLoad={handleImageLoad}
+              onError={handleImageError}
+            />
+          </View>
 
           <View style={styles.contentContainer}>
             <ThemedText style={styles.title}>{artwork.title}</ThemedText>
@@ -256,38 +330,34 @@ export default function ArtworkDetailScreen() {
                 ))}
               </View>
             )}
-            
-            {artwork.isForSale && (
-              <View style={styles.priceContainer}>
-                <ThemedText style={styles.priceLabel}>Цена:</ThemedText>
-                <ThemedText style={styles.priceValue}>
-                  {artwork.price?.toLocaleString()} {artwork.currency}
-                </ThemedText>
-                <TouchableOpacity 
-                  style={styles.contactButton}
-                  onPress={handleContactArtist}
-                >
-                  <ThemedText style={styles.contactButtonText}>Связаться с продавцом</ThemedText>
-                </TouchableOpacity>
-              </View>
-            )}
           </View>
+          
+          <CommentsSection artworkId={artwork.id} />
         </ScrollView>
       </View>
       
-      <View style={styles.commentsContainer}>
-        <CommentsSection artworkId={artwork.id} commentCount={artwork.comments} />
-      </View>
-      
-      {isContactModalVisible && artist && (
-        <ContactArtistModal
-          visible={isContactModalVisible}
-          artist={artist}
-          artwork={artwork}
-          onClose={() => setIsContactModalVisible(false)}
-          onSubmit={handleContactArtist}
-        />
+      {artwork.isForSale && (
+        <View style={styles.footer}>
+          <View style={styles.priceContainer}>
+            <ThemedText style={styles.priceLabel}>Цена:</ThemedText>
+            <ThemedText style={styles.priceValue}>{artwork.price?.toLocaleString()} {artwork.currency}</ThemedText>
+          </View>
+          <TouchableOpacity 
+            style={styles.contactButton}
+            onPress={handleContactArtist}
+          >
+            <FontAwesome name="envelope" size={16} color="#fff" style={styles.contactIcon} />
+            <ThemedText style={styles.contactText}>Связаться с продавцом</ThemedText>
+          </TouchableOpacity>
+        </View>
       )}
+      
+      <ContactArtistModal
+        visible={isContactModalVisible}
+        onClose={() => setIsContactModalVisible(false)}
+        artist={artist}
+        artwork={artwork}
+      />
     </ThemedView>
   );
 }
@@ -295,16 +365,9 @@ export default function ArtworkDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
   },
   mainContent: {
-    flex: 0.6, // 60% высоты экрана
-  },
-  commentsContainer: {
-    flex: 0.4, // 40% высоты экрана
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
+    flex: 1,
   },
   scrollContainer: {
     flex: 1,
@@ -314,11 +377,41 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  image: {
-    width: width,
-    height: width,
-    resizeMode: 'contain',
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+  },
+  imageContainer: {
+    position: 'relative',
+    width: '100%',
+    height: 300,
+  },
+  imagePlaceholder: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: '#f0f0f0',
+    zIndex: 1,
+  },
+  image: {
+    width: '100%',
+    height: 300,
+    resizeMode: 'cover',
+  },
+  backButton: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: '#0a7ea4',
+    borderRadius: 8,
+  },
+  backButtonText: {
+    color: '#fff',
+    fontSize: 16,
   },
   contentContainer: {
     padding: 16,
@@ -401,14 +494,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
   },
-  priceContainer: {
+  footer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  priceContainer: {
+    flex: 1,
   },
   priceLabel: {
     fontSize: 16,
-    marginRight: 8,
+    marginBottom: 8,
   },
   priceValue: {
     fontSize: 22,
@@ -423,7 +521,10 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 8,
   },
-  contactButtonText: {
+  contactIcon: {
+    marginRight: 8,
+  },
+  contactText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
