@@ -143,7 +143,7 @@ export default function ExploreScreen() {
     tags: []
   });
   const router = useRouter();
-  const { searchArtworks, allArtworks } = useArtworks(); // Используем функцию поиска из контекста
+  const { searchArtworks, searchByTag, allArtworks } = useArtworks(); // Используем функцию поиска из контекста
   
   // Применяем параметр тега при загрузке компонента
   useEffect(() => {
@@ -164,12 +164,31 @@ export default function ExploreScreen() {
     // Если это поиск по тегу, приоритезируем поиск по тегам
     if (isTagSearch) {
       console.log(`Поиск по тегу: ${lowerQuery}`);
-      return ALL_AVAILABLE_ARTWORKS.filter(artwork => 
-        artwork.tags.some(tag => tag.toLowerCase() === lowerQuery)
-      );
+      
+      // Сначала ищем в контексте через функцию searchByTag
+      let results = searchByTag(lowerQuery);
+      
+      // Если результатов мало, добавляем из моковых данных
+      if (results.length < 3) {
+        const mockResults = ALL_AVAILABLE_ARTWORKS.filter(artwork => 
+          artwork.tags.some(tag => tag.toLowerCase() === lowerQuery)
+        );
+        
+        // Объединяем результаты, удаляя дубликаты по ID
+        const combinedResults = [...results];
+        mockResults.forEach(mockArtwork => {
+          if (!combinedResults.some(art => art.id === mockArtwork.id)) {
+            combinedResults.push(mockArtwork);
+          }
+        });
+        
+        results = combinedResults;
+      }
+      
+      return results;
     }
     
-    // Сначала ищем в контексте
+    // Для обычного поиска используем стандартную функцию
     let results = searchArtworks(query);
     
     // Если результатов нет или их мало, добавляем результаты из моковых данных
@@ -197,6 +216,20 @@ export default function ExploreScreen() {
     return results;
   };
   
+  // Функция поиска пользователей, учитывающая теги в artStyles и skills
+  const searchArtistsByTag = (query: string): User[] => {
+    if (!query.trim()) return MOCK_ARTISTS;
+    
+    const lowerQuery = query.toLowerCase();
+    return MOCK_ARTISTS.filter(artist => 
+      artist.displayName.toLowerCase().includes(lowerQuery) ||
+      artist.username.toLowerCase().includes(lowerQuery) ||
+      artist.bio.toLowerCase().includes(lowerQuery) ||
+      artist.artStyles.some(style => style.toLowerCase().includes(lowerQuery)) ||
+      (artist.skills && artist.skills.some(skill => skill.toLowerCase().includes(lowerQuery)))
+    );
+  };
+  
   // Имитация поиска с загрузкой
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
@@ -207,12 +240,8 @@ export default function ExploreScreen() {
       // Используем модифицированную функцию поиска работ
       const artworksResults = customSearchArtworks(query);
       
-      // Фильтруем художников по запросу (имитация)
-      const artistsResults = MOCK_ARTISTS.filter(artist => 
-        artist.displayName.toLowerCase().includes(query.toLowerCase()) ||
-        artist.username.toLowerCase().includes(query.toLowerCase()) ||
-        artist.bio.toLowerCase().includes(query.toLowerCase())
-      );
+      // Используем модифицированную функцию поиска художников с учетом тегов
+      const artistsResults = searchArtistsByTag(query);
       
       // Фильтруем теги по запросу (имитация) и добавляем приоритетные теги
       let tagsResults = POPULAR_TAGS.filter(tag => 
@@ -234,17 +263,34 @@ export default function ExploreScreen() {
         });
       });
       
-      // Объединяем теги из работ с найденными тегами
-      tagsResults = [...new Set([...tagsResults, ...tagsFromArtworks])];
+      // Добавляем теги из найденных художников (artStyles и skills)
+      const tagsFromArtists = new Set<string>();
+      artistsResults.forEach(artist => {
+        artist.artStyles.forEach(style => {
+          if (style.toLowerCase().includes(query.toLowerCase())) {
+            tagsFromArtists.add(style);
+          }
+        });
+        if (artist.skills) {
+          artist.skills.forEach(skill => {
+            if (skill.toLowerCase().includes(query.toLowerCase())) {
+              tagsFromArtists.add(skill);
+            }
+          });
+        }
+      });
+      
+      // Объединяем все теги
+      tagsResults = [...new Set([...tagsResults, ...tagsFromArtworks, ...tagsFromArtists])];
       
       setTimeout(() => {
         // Устанавливаем активную вкладку в зависимости от результатов поиска
         if (artworksResults.length > 0) {
           setActiveTab('artworks');
-        } else if (tagsResults.length > 0 && artworksResults.length === 0) {
-          setActiveTab('tags');
-        } else if (artistsResults.length > 0 && artworksResults.length === 0) {
+        } else if (artistsResults.length > 0) {
           setActiveTab('artists');
+        } else if (tagsResults.length > 0) {
+          setActiveTab('tags');
         }
         
         setSearchResults({
@@ -257,7 +303,7 @@ export default function ExploreScreen() {
     } else {
       setSearchResults({ artworks: [], artists: [], tags: [] });
     }
-  }, [searchArtworks, allArtworks]);
+  }, [searchArtworks, searchByTag, allArtworks]);
   
   const renderArtistItem = ({ item }: { item: User }) => (
     <TouchableOpacity 
@@ -274,6 +320,25 @@ export default function ExploreScreen() {
         </View>
         <ThemedText style={styles.artistUsername}>@{item.username}</ThemedText>
         <ThemedText style={styles.artistBio} numberOfLines={1}>{item.bio}</ThemedText>
+        
+        {/* Показываем теги художника */}
+        {item.artStyles && item.artStyles.length > 0 && (
+          <View style={styles.artistTagsContainer}>
+            {item.artStyles.slice(0, 2).map((style, index) => (
+              <TouchableOpacity 
+                key={`${item.id}-style-${index}`}
+                style={styles.artistTag}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  handleSearch(style);
+                }}
+              >
+                <ThemedText style={styles.artistTagText}>{style}</ThemedText>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+        
         <View style={styles.artistStats}>
           <ThemedText style={styles.artistFollowers}>{item.followers} подписчиков</ThemedText>
           {item.location && (
@@ -295,24 +360,45 @@ export default function ExploreScreen() {
     </TouchableOpacity>
   );
 
-  const renderTagItem = ({ item }: { item: string }) => (
-    <TouchableOpacity 
-      style={styles.tagItem}
-      onPress={() => {
-        // При нажатии на тег выполняем поиск по нему и переключаемся на вкладку "Работы"
-        handleSearch(item);
-        setActiveTab('artworks');
-      }} 
-    >
-      <FontAwesome name="hashtag" size={14} color="#0a7ea4" />
-      <ThemedText style={styles.tagText}>{item}</ThemedText>
-      <ThemedText style={styles.tagCount}>
-        {ALL_AVAILABLE_ARTWORKS.filter(art => 
-          art.tags.some(tag => tag.toLowerCase() === item.toLowerCase())
-        ).length} работ
-      </ThemedText>
-    </TouchableOpacity>
-  );
+  const renderTagItem = ({ item }: { item: string }) => {
+    // Считаем количество художников с таким тегом (в artStyles или skills)
+    const artistsCount = MOCK_ARTISTS.filter(artist => 
+      artist.artStyles.some(style => style.toLowerCase() === item.toLowerCase()) ||
+      (artist.skills && artist.skills.some(skill => skill.toLowerCase() === item.toLowerCase()))
+    ).length;
+    
+    // Считаем количество работ с таким тегом
+    const artworksCount = ALL_AVAILABLE_ARTWORKS.filter(art => 
+      art.tags.some(tag => tag.toLowerCase() === item.toLowerCase())
+    ).length;
+    
+    return (
+      <TouchableOpacity 
+        style={styles.tagItem}
+        onPress={() => {
+          // При нажатии на тег выполняем поиск по нему и переключаемся на вкладку "Работы"
+          handleSearch(item);
+          // Определяем, на какую вкладку переключиться в зависимости от наличия результатов
+          if (artworksCount > 0) {
+            setActiveTab('artworks');
+          } else if (artistsCount > 0) {
+            setActiveTab('artists');
+          }
+        }} 
+      >
+        <FontAwesome name="hashtag" size={14} color="#0a7ea4" />
+        <ThemedText style={styles.tagText}>{item}</ThemedText>
+        <View style={styles.tagCounts}>
+          {artworksCount > 0 && (
+            <ThemedText style={styles.tagCount}>{artworksCount} работ</ThemedText>
+          )}
+          {artistsCount > 0 && (
+            <ThemedText style={styles.tagArtistCount}>{artistsCount} художников</ThemedText>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   const renderPopularTagItem = ({ item }: { item: string }) => (
     <TouchableOpacity 
@@ -733,12 +819,26 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#0a7ea4',
     marginLeft: 8,
+    flex: 1,
   },
   tagCount: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#888',
-    marginLeft: 'auto',
     backgroundColor: 'rgba(10, 126, 164, 0.1)', 
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+    marginRight: 4,
+  },
+  tagCounts: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 'auto',
+  },
+  tagArtistCount: {
+    fontSize: 12,
+    color: '#888',
+    backgroundColor: 'rgba(221, 160, 221, 0.2)', 
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 12,
@@ -788,5 +888,20 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  artistTagsContainer: {
+    flexDirection: 'row',
+    marginBottom: 4,
+  },
+  artistTag: {
+    backgroundColor: 'rgba(10, 126, 164, 0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 16,
+    marginRight: 4,
+  },
+  artistTagText: {
+    color: '#0a7ea4',
+    fontSize: 12,
   },
 });

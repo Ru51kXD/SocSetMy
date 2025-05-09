@@ -15,6 +15,7 @@ interface ArtworkContextType {
   removeArtwork: (artworkId: string) => Promise<void>;
   getUserArtworks: (userId: string) => Artwork[];
   searchArtworks: (query: string) => Artwork[];
+  searchByTag: (tag: string) => Artwork[];
 }
 
 // Создаем контекст
@@ -134,6 +135,16 @@ export const ArtworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
     );
   };
 
+  // Поиск работ по точному тегу
+  const searchByTag = (tag: string): Artwork[] => {
+    if (!tag.trim()) return allArtworks;
+    
+    const lowerTag = tag.toLowerCase();
+    return allArtworks.filter(artwork => 
+      artwork.tags.some(artworkTag => artworkTag.toLowerCase() === lowerTag)
+    );
+  };
+
   // Контекст для провайдера
   const contextValue: ArtworkContextType = {
     userArtworks,
@@ -142,7 +153,8 @@ export const ArtworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
     addArtwork,
     removeArtwork,
     getUserArtworks,
-    searchArtworks
+    searchArtworks,
+    searchByTag
   };
 
   return (
