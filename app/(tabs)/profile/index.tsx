@@ -13,6 +13,7 @@ import { useArtworks } from '@/app/context/ArtworkContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { UploadArtworkModal } from '@/app/components/artwork/UploadArtworkModal';
 import { useUserPreferences } from '@/app/context/UserPreferencesContext';
+import { useRouter } from 'expo-router';
 
 // Константа для расчета размеров сетки
 const { width } = Dimensions.get('window');
@@ -38,7 +39,7 @@ const SAVED_ARTWORKS: Artwork[] = [
     comments: 43,
     isForSale: true,
     price: 20000,
-    currency: 'RUB',
+    currency: 'KZT',
     createdAt: '2023-07-18'
   },
   {
@@ -80,7 +81,7 @@ const LIKED_ARTWORKS: Artwork[] = [
     comments: 28,
     isForSale: true,
     price: 15000,
-    currency: 'RUB',
+    currency: 'KZT',
     createdAt: '2023-05-12'
   },
   {
@@ -153,6 +154,7 @@ export default function ProfileScreen() {
   const { user, logout } = useAuth(); // Получаем пользователя и функцию выхода из AuthContext
   const { userArtworks, isLoading: isLoadingArtworks } = useArtworks(); // Получаем работы пользователя из ArtworkContext
   const { likedArtworks, savedArtworks, isLoading: isLoadingPreferences } = useUserPreferences(); // Получаем лайкнутые и сохраненные работы
+  const router = useRouter();
   
   const [activeTab, setActiveTab] = useState<TabType>('works');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -225,8 +227,11 @@ export default function ProfileScreen() {
   };
 
   // Обработчик успешной загрузки работы
-  const handleUploadSuccess = () => {
-    // При необходимости здесь можно добавить дополнительную логику
+  const handleUploadSuccess = (artworkId?: string) => {
+    // Если передан ID работы, переходим к ней
+    if (artworkId) {
+      router.push(`/(tabs)/artwork/${artworkId}`);
+    }
   };
 
   // Функция для отображения произведений в зависимости от активной вкладки

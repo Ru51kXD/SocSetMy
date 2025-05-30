@@ -28,7 +28,7 @@ const ARTWORK_CATEGORIES = [
 interface UploadArtworkModalProps {
   visible: boolean;
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (artworkId?: string) => void;
 }
 
 export function UploadArtworkModal({ visible, onClose, onSuccess }: UploadArtworkModalProps) {
@@ -131,7 +131,7 @@ export function UploadArtworkModal({ visible, onClose, onSuccess }: UploadArtwor
         comments: 0,
         isForSale: isForSale,
         price: isForSale ? parseFloat(price) : undefined,
-        currency: isForSale ? 'RUB' : undefined,
+        currency: isForSale ? 'KZT' : undefined,
         createdAt: new Date().toISOString().split('T')[0]
       };
       
@@ -139,12 +139,15 @@ export function UploadArtworkModal({ visible, onClose, onSuccess }: UploadArtwor
       
       Alert.alert(
         'Успех',
-        'Работа успешно загружена',
-        [{ text: 'OK', onPress: () => {
-          resetForm();
-          onClose();
-          if (onSuccess) onSuccess();
-        }}]
+        'Работа успешно опубликована!',
+        [{ 
+          text: 'Посмотреть', 
+          onPress: () => {
+            resetForm();
+            onClose();
+            if (onSuccess) onSuccess(newArtwork.id);
+          }
+        }]
       );
       
     } catch (error) {
@@ -242,7 +245,7 @@ export function UploadArtworkModal({ visible, onClose, onSuccess }: UploadArtwor
                     placeholder="Цена"
                     keyboardType="numeric"
                   />
-                  <ThemedText style={styles.currencyLabel}>₽</ThemedText>
+                  <ThemedText style={styles.currencyLabel}>₸</ThemedText>
                 </View>
               )}
             </View>

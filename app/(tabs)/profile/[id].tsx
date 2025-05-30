@@ -151,7 +151,7 @@ const PROFILE_MOCK_ARTWORKS: Artwork[] = [
     comments: 28,
     isForSale: true,
     price: 15000,
-    currency: 'RUB',
+    currency: 'KZT',
     createdAt: '2023-05-12'
   },
   {
@@ -193,7 +193,7 @@ const PROFILE_MOCK_ARTWORKS: Artwork[] = [
     comments: 32,
     isForSale: true,
     price: 25000,
-    currency: 'RUB',
+    currency: 'KZT',
     createdAt: '2023-04-05'
   },
   {
@@ -213,7 +213,7 @@ const PROFILE_MOCK_ARTWORKS: Artwork[] = [
     comments: 48,
     isForSale: true,
     price: 12000,
-    currency: 'RUB',
+    currency: 'KZT',
     createdAt: '2023-09-15'
   },
   {
@@ -251,7 +251,7 @@ const PROFILE_MOCK_ARTWORKS: Artwork[] = [
     comments: 23,
     isForSale: true,
     price: 75000,
-    currency: 'RUB',
+    currency: 'KZT',
     createdAt: '2023-07-03'
   },
   {
@@ -271,7 +271,7 @@ const PROFILE_MOCK_ARTWORKS: Artwork[] = [
     comments: 56,
     isForSale: true,
     price: 8500,
-    currency: 'RUB',
+    currency: 'KZT',
     createdAt: '2023-08-12'
   },
   {
@@ -293,7 +293,7 @@ const PROFILE_MOCK_ARTWORKS: Artwork[] = [
     comments: 43,
     isForSale: true,
     price: 20000,
-    currency: 'RUB',
+    currency: 'KZT',
     createdAt: '2023-07-18'
   }
 ];

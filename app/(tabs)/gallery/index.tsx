@@ -68,7 +68,7 @@ const USER_ARTWORKS: Artwork[] = [
     comments: 48,
     isForSale: true,
     price: 12000,
-    currency: 'RUB',
+    currency: 'KZT',
     createdAt: '2023-09-15'
   },
   {
@@ -89,7 +89,7 @@ const USER_ARTWORKS: Artwork[] = [
     comments: 32,
     isForSale: true,
     price: 8000,
-    currency: 'RUB',
+    currency: 'KZT',
     createdAt: '2023-10-22'
   },
   {

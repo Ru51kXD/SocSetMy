@@ -109,7 +109,7 @@ export default function UploadScreen() {
         comments: 0,
         isForSale: isForSale,
         price: isForSale ? parseFloat(price) : undefined,
-        currency: isForSale ? 'RUB' : undefined,
+        currency: isForSale ? 'KZT' : undefined,
         createdAt: new Date().toISOString().split('T')[0]
       };
       
@@ -117,22 +117,25 @@ export default function UploadScreen() {
       
       Alert.alert(
         'Успех',
-        'Работа успешно загружена',
-        [{ text: 'OK', onPress: () => {
-          // Очистка формы
-          setTitle('');
-          setDescription('');
-          setSelectedImages([]);
-          setCategory('');
-          setTags('');
-          setMedium('');
-          setDimensions('');
-          setIsForSale(false);
-          setPrice('');
-          
-          // Перенаправление на экран профиля
-          router.push('/(tabs)/profile');
-        }}]
+        'Работа успешно опубликована!',
+        [{ 
+          text: 'Посмотреть', 
+          onPress: () => {
+            // Очистка формы
+            setTitle('');
+            setDescription('');
+            setSelectedImages([]);
+            setCategory('');
+            setTags('');
+            setMedium('');
+            setDimensions('');
+            setIsForSale(false);
+            setPrice('');
+            
+            // Переход к созданной работе
+            router.push(`/(tabs)/artwork/${newArtwork.id}`);
+          }
+        }]
       );
     } catch (error) {
       console.error('Ошибка при загрузке работы:', error);
@@ -255,7 +258,7 @@ export default function UploadScreen() {
         
         {isForSale && (
           <View style={styles.formGroup}>
-            <ThemedText style={styles.label}>Цена (руб.)</ThemedText>
+            <ThemedText style={styles.label}>Цена (тенге)</ThemedText>
             <TextInput
               style={styles.input}
               value={price}

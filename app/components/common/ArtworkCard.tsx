@@ -373,7 +373,7 @@ export function ArtworkCard({ artwork, artworkId, compact = false, onContactRequ
           {artwork.isForSale && (
             <View style={styles.priceTag}>
               <ThemedText style={styles.priceText}>
-                {artwork.price?.toLocaleString()} {artwork.currency}
+                {artwork.price?.toLocaleString()} ₸
               </ThemedText>
             </View>
           )}

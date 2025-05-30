@@ -79,7 +79,7 @@ const WATERCOLOR_ARTWORKS: Artwork[] = [
     comments: 42,
     isForSale: true,
     price: 18000,
-    currency: 'RUB',
+    currency: 'KZT',
     createdAt: '2023-08-12'
   },
   {
@@ -99,7 +99,7 @@ const WATERCOLOR_ARTWORKS: Artwork[] = [
     comments: 38,
     isForSale: true,
     price: 15000,
-    currency: 'RUB',
+    currency: 'KZT',
     createdAt: '2023-09-05'
   },
   {
@@ -119,7 +119,7 @@ const WATERCOLOR_ARTWORKS: Artwork[] = [
     comments: 57,
     isForSale: true,
     price: 25000,
-    currency: 'RUB',
+    currency: 'KZT',
     createdAt: '2023-07-19'
   }
 ];

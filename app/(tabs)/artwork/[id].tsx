@@ -353,7 +353,7 @@ export default function ArtworkDetailScreen() {
         <View style={styles.footer}>
           <View style={styles.priceContainer}>
             <ThemedText style={styles.priceLabel}>Цена:</ThemedText>
-            <ThemedText style={styles.priceValue}>{artwork.price?.toLocaleString()} {artwork.currency}</ThemedText>
+            <ThemedText style={styles.priceValue}>{artwork.price?.toLocaleString()} ₸</ThemedText>
           </View>
           <TouchableOpacity 
             style={styles.contactButton}

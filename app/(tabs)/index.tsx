@@ -81,7 +81,7 @@ const MOCK_TRENDING_ARTWORKS: Artwork[] = [
     comments: 28,
     isForSale: true,
     price: 15000,
-    currency: 'RUB',
+    currency: 'KZT',
     createdAt: '2023-05-12'
   },
   // Находим работу Алексея Петрова
@@ -121,7 +121,7 @@ const MOCK_TRENDING_ARTWORKS: Artwork[] = [
     comments: 32,
     isForSale: true,
     price: 25000,
-    currency: 'RUB',
+    currency: 'KZT',
     createdAt: '2023-04-05'
   },
 ];

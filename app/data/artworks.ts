@@ -150,7 +150,7 @@ const fixedArtworks: Artwork[] = [
     comments: 28,
     isForSale: true,
     price: 15000,
-    currency: 'RUB',
+    currency: 'KZT',
     createdAt: '2023-05-12'
   },
   {
@@ -172,7 +172,7 @@ const fixedArtworks: Artwork[] = [
     comments: 43,
     isForSale: true,
     price: 20000,
-    currency: 'RUB',
+    currency: 'KZT',
     createdAt: '2023-07-18'
   }
 ];
@@ -243,7 +243,7 @@ const paintingArtworks: Artwork[] = Array.from({ length: 26 }, (_, index) => {
     comments,
     isForSale,
     price,
-    currency: 'RUB',
+    currency: 'KZT',
     createdAt: getRandomDate(new Date(2022, 0, 1), new Date())
   };
 });
@@ -311,7 +311,7 @@ const graphicsArtworks: Artwork[] = Array.from({ length: 25 }, (_, index) => {
     comments,
     isForSale,
     price,
-    currency: 'RUB',
+    currency: 'KZT',
     createdAt: getRandomDate(new Date(2022, 0, 1), new Date())
   };
 });
@@ -388,7 +388,7 @@ const digitalArtworks: Artwork[] = Array.from({ length: 33 }, (_, index) => {
     comments,
     isForSale,
     price,
-    currency: 'RUB',
+    currency: 'KZT',
     createdAt: getRandomDate(new Date(2022, 0, 1), new Date())
   };
 });
@@ -450,7 +450,7 @@ const sculptureArtworks: Artwork[] = Array.from({ length: 19 }, (_, index) => {
     comments,
     isForSale,
     price,
-    currency: 'RUB',
+    currency: 'KZT',
     createdAt: getRandomDate(new Date(2022, 0, 1), new Date())
   };
 });
