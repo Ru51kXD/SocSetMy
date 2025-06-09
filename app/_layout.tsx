@@ -8,6 +8,7 @@ import { MessageProvider } from '@/app/context/MessageContext';
 import { AuthProvider, useAuth } from '@/app/context/AuthContext';
 import { ArtworkProvider } from '@/app/context/ArtworkContext';
 import { UserPreferencesProvider } from '@/app/context/UserPreferencesContext';
+import { FollowProvider } from '@/app/context/FollowContext';
 import 'react-native-reanimated';
 import * as Updates from 'expo-updates';
 import { ThemeProvider } from '@react-navigation/native';
@@ -116,17 +117,19 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' }) {
       <ArtworkProvider>
         <MessageProvider>
           <UserPreferencesProvider>
-            <View style={{ flex: 1 }}>
-              <StatusBar barStyle="dark-content" />
-              <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-                <Stack screenOptions={{ headerShown: false }}>
-                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                  <Stack.Screen name="auth" options={{ headerShown: false }} />
-                  <Stack.Screen name="+not-found" />
-                </Stack>
-                <AuthenticationGuard />
-              </ThemeProvider>
-            </View>
+            <FollowProvider>
+              <View style={{ flex: 1 }}>
+                <StatusBar barStyle="dark-content" />
+                <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+                  <Stack screenOptions={{ headerShown: false }}>
+                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                    <Stack.Screen name="auth" options={{ headerShown: false }} />
+                    <Stack.Screen name="+not-found" />
+                  </Stack>
+                  <AuthenticationGuard />
+                </ThemeProvider>
+              </View>
+            </FollowProvider>
           </UserPreferencesProvider>
         </MessageProvider>
       </ArtworkProvider>

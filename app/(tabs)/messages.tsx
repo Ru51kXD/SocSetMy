@@ -46,8 +46,10 @@ export default function MessagesScreen() {
     );
     
     for (const thread of sorted) {
-      const name = thread.artist.displayName;
-      const id = String(thread.artist.id);
+      if (!thread.artist) continue; // Пропускаем чаты без художника
+      
+      const name = thread.artist.displayName || 'Неизвестный художник';
+      const id = String(thread.artist.id || 'unknown');
       
       // Если ни имя, ни ID художника еще не встречались, добавляем чат
       if (!nameMap.has(name) && !idMap.has(id)) {
@@ -168,7 +170,9 @@ export default function MessagesScreen() {
       
       <View style={styles.threadContent}>
         <View style={styles.threadHeader}>
-          <ThemedText style={styles.artistName}>{item.artist.displayName}</ThemedText>
+          <ThemedText style={styles.artistName}>
+            {item.artist?.displayName || 'Неизвестный художник'}
+          </ThemedText>
           <View style={styles.dateContainer}>
             <ThemedText style={styles.dateText}>{formatMessageDate(item.date)}</ThemedText>
           </View>
@@ -464,11 +468,14 @@ export default function MessagesScreen() {
                 style={styles.chatAvatar}
               />
               <View style={styles.artistNameContainer}>
-                <ThemedText style={styles.chatArtistName}>{activeThread.artist.displayName}</ThemedText>
+                <ThemedText style={styles.chatArtistName}>
+                  {activeThread?.artist?.displayName || 'Неизвестный художник'}
+                </ThemedText>
                 <ThemedText style={styles.artistStatus}>
-                  {activeThread.artist.artStyles.length > 0 
-                    ? activeThread.artist.artStyles[0] 
-                    : 'Художник'}
+                  {activeThread?.artist?.artStyles?.length > 0 
+                    ? activeThread.artist.artStyles.join(', ')
+                    : 'Художник'
+                  }
                   {isTyping && ' • печатает...'}
                 </ThemedText>
               </View>

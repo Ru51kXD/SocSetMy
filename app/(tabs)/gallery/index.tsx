@@ -183,16 +183,22 @@ export default function GalleryScreen() {
           {MOCK_GALLERIES.map((gallery) => (
             <TouchableOpacity key={gallery.id} style={styles.collectionCard}>
               <View style={styles.collectionImageContainer}>
-                <View style={styles.collectionImage} />
+                {gallery.coverImage ? (
+                  <View style={styles.collectionImage} />
+                ) : (
+                  <View style={styles.collectionImagePlaceholder} />
+                )}
                 <View style={styles.collectionInfo}>
-                  <ThemedText style={styles.collectionTitle}>{gallery.title}</ThemedText>
+                  <ThemedText style={styles.collectionTitle}>
+                    {gallery?.title || 'Галерея'}
+                  </ThemedText>
                   <ThemedText style={styles.collectionCount}>
-                    {gallery.artworkCount} работ
+                    {gallery?.artworkCount || 0} работ
                   </ThemedText>
                 </View>
               </View>
               <ThemedText style={styles.collectionDescription} numberOfLines={2}>
-                {gallery.description}
+                {gallery?.description || 'Нет описания'}
               </ThemedText>
             </TouchableOpacity>
           ))}
@@ -304,5 +310,12 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     color: '#0a7ea4',
     fontWeight: 'bold',
+  },
+  collectionImagePlaceholder: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    backgroundColor: '#ddd',
+    marginRight: 12,
   },
 }); 

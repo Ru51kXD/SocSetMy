@@ -134,12 +134,12 @@ export default function CategoryScreen() {
       {/* Обложка категории */}
       <View style={styles.coverContainer}>
         <Image 
-          source={{ uri: currentCategory.imageUrl }} 
+          source={{ uri: currentCategory?.imageUrl || 'https://via.placeholder.com/600x200' }} 
           style={styles.coverImage}
         />
         <View style={styles.overlay} />
-        <ThemedText style={styles.coverTitle}>{currentCategory.name}</ThemedText>
-        {currentCategory.description && (
+        <ThemedText style={styles.coverTitle}>{currentCategory?.name || 'Категория'}</ThemedText>
+        {currentCategory?.description && (
           <ThemedText style={styles.coverDescription}>{currentCategory.description}</ThemedText>
         )}
       </View>

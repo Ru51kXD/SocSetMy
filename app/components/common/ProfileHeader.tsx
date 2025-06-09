@@ -4,6 +4,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { User } from '@/app/models/types';
+import { useRouter } from 'expo-router';
 
 interface ProfileHeaderProps {
   user: User | null;
@@ -12,6 +13,8 @@ interface ProfileHeaderProps {
   onFollow?: () => void;
   onMessage?: () => void;
   onEditProfile?: () => void;
+  followersCount?: number;
+  followingCount?: number;
 }
 
 const { width } = Dimensions.get('window');
@@ -22,8 +25,12 @@ export function ProfileHeader({
   isFollowing = false,
   onFollow,
   onMessage,
-  onEditProfile
+  onEditProfile,
+  followersCount,
+  followingCount
 }: ProfileHeaderProps) {
+  const router = useRouter();
+  
   // Если пользователь не загружен, показываем заглушку
   if (!user) {
     return (
@@ -38,10 +45,28 @@ export function ProfileHeader({
 
   return (
     <ThemedView style={styles.container}>
-      <Image 
-        source={{ uri: user.coverImage || 'https://via.placeholder.com/600x200' }} 
-        style={styles.coverImage} 
-      />
+      {isCurrentUser && user && (
+        <View style={styles.welcomeContainer}>
+          <ThemedText style={styles.welcomeText}>
+            Привет, {user.displayName?.split(' ')[0] || 'пользователь'}!
+          </ThemedText>
+        </View>
+      )}
+      
+      <View style={styles.coverContainer}>
+        {user && (
+          <Image 
+            source={{ uri: user.coverImage || 'https://via.placeholder.com/600x200' }} 
+            style={styles.coverImage} 
+          />
+        )}
+        
+        {!isCurrentUser && (
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <FontAwesome name="arrow-left" size={20} color="#fff" />
+          </TouchableOpacity>
+        )}
+      </View>
       
       <View style={styles.avatarContainer}>
         <Image source={{ uri: user.avatar }} style={styles.avatar} />
@@ -74,11 +99,15 @@ export function ProfileHeader({
         
         <View style={styles.statsRow}>
           <View style={styles.stat}>
-            <ThemedText style={styles.statCount}>{user.followers}</ThemedText>
+            <ThemedText style={styles.statCount}>
+              {followersCount !== undefined ? followersCount : user.followers}
+            </ThemedText>
             <ThemedText style={styles.statLabel}>Подписчики</ThemedText>
           </View>
           <View style={styles.stat}>
-            <ThemedText style={styles.statCount}>{user.following}</ThemedText>
+            <ThemedText style={styles.statCount}>
+              {followingCount !== undefined ? followingCount : user.following}
+            </ThemedText>
             <ThemedText style={styles.statLabel}>Подписки</ThemedText>
           </View>
         </View>
@@ -165,10 +194,35 @@ const styles = StyleSheet.create({
   container: {
     marginBottom: 16,
   },
+  welcomeContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#fff',
+  },
+  welcomeText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  coverContainer: {
+    position: 'relative',
+    width: '100%',
+  },
   coverImage: {
     width: width,
     height: 160,
     resizeMode: 'cover',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
   },
   placeholderCover: {
     width: width,
@@ -253,86 +307,52 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#888',
   },
-  tagsSection: {
-    marginVertical: 8,
-    width: '100%',
-  },
-  tagsTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  tagContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  tag: {
-    backgroundColor: 'rgba(10, 126, 164, 0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    marginRight: 8,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(10, 126, 164, 0.2)',
-  },
-  photoTag: {
-    backgroundColor: 'rgba(76, 175, 80, 0.1)',
-    borderColor: 'rgba(76, 175, 80, 0.2)',
-  },
-  tagText: {
-    fontSize: 14,
-    color: '#0a7ea4',
-  },
   editButton: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 20,
-    paddingVertical: 8,
     paddingHorizontal: 20,
-    marginVertical: 8,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#0a7ea4',
+    borderRadius: 20,
+    marginTop: 12,
   },
   editButtonText: {
-    fontSize: 14,
+    color: '#0a7ea4',
     fontWeight: '500',
   },
   actionButtons: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 16,
+    alignItems: 'center',
+    marginTop: 12,
   },
   actionButton: {
+    paddingHorizontal: 20,
     paddingVertical: 8,
-    paddingHorizontal: 24,
     borderRadius: 20,
-    marginHorizontal: 8,
+    marginRight: 10,
   },
   followButton: {
     backgroundColor: '#0a7ea4',
   },
   unfollowButton: {
-    backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: '#0a7ea4',
+    backgroundColor: 'transparent',
   },
   followText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontWeight: '500',
   },
   unfollowText: {
     color: '#0a7ea4',
-    fontWeight: 'bold',
+    fontWeight: '500',
   },
   messageButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: '#ddd',
     alignItems: 'center',
@@ -340,15 +360,44 @@ const styles = StyleSheet.create({
   },
   socialLinks: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    marginTop: 20,
   },
   socialIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.05)',
+    backgroundColor: '#f5f5f5',
     alignItems: 'center',
     justifyContent: 'center',
     marginHorizontal: 8,
+  },
+  tagsSection: {
+    width: '100%',
+    marginTop: 12,
+  },
+  tagsTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  tagContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
+  tag: {
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    margin: 4,
+  },
+  photoTag: {
+    backgroundColor: '#e6f7ff',
+  },
+  tagText: {
+    fontSize: 12,
+    color: '#555',
   },
 }); 

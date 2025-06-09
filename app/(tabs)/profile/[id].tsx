@@ -11,6 +11,8 @@ import { ContactArtistModal } from '@/app/components/common/ContactArtistModal';
 import { User, Artwork } from '@/app/models/types';
 import { MOCK_ARTWORKS } from '@/app/data/artworks';
 import { useMessages } from '@/app/context/MessageContext';
+import { useFollow } from '@/app/context/FollowContext';
+import { useAuth } from '@/app/context/AuthContext';
 
 // Моковые данные художников
 const MOCK_ARTISTS: User[] = [
@@ -301,96 +303,129 @@ const PROFILE_MOCK_ARTWORKS: Artwork[] = [
 type TabType = 'portfolio' | 'about' | 'collections';
 
 export default function ArtistProfileScreen() {
-  const { id } = useLocalSearchParams();
-  const artistId = typeof id === 'string' ? id : '';
-  const [activeTab, setActiveTab] = useState<TabType>('portfolio');
+  const { id: artistId } = useLocalSearchParams();
+  const router = useRouter();
+  const { user } = useAuth();
+  const { addMessage, hasThreadWithArtist, setActiveChat, shareArtwork } = useMessages();
+  const { isFollowing: checkIsFollowing, followUser, unfollowUser, getFollowersCount, getFollowingCount } = useFollow();
+  
   const [artist, setArtist] = useState<User | null>(null);
   const [artworks, setArtworks] = useState<Artwork[]>([]);
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [isContactModalVisible, setIsContactModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
-  const { setActiveChat, hasThreadWithArtist, shareArtwork, addMessage } = useMessages();
+  const [activeTab, setActiveTab] = useState<TabType>('portfolio');
+  const [isContactModalVisible, setIsContactModalVisible] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
   
   useEffect(() => {
-    // Устанавливаем флаг загрузки
-    setIsLoading(true);
+    const loadArtistData = async () => {
+      try {
+        setIsLoading(true);
+        // Находим художника по ID из параметров URL
+        const artistData = MOCK_ARTISTS.find(a => a.id === artistId);
+        
+        if (artistData) {
+          setArtist(artistData);
+        } else {
+          // Если художник не найден в локальных данных, ищем в импортированных из artworks.ts
+          // Находим работы художника и берем данные из первой работы
+          const artistWorks = MOCK_ARTWORKS.filter(artwork => artwork.artistId === artistId);
+          if (artistWorks.length > 0) {
+            const firstWork = artistWorks[0];
+            // Создаем минимальный объект художника из данных его работы
+            const minimalArtist: User = {
+              id: firstWork.artistId,
+              username: firstWork.artistName.toLowerCase().replace(/\s+/g, '_'),
+              displayName: firstWork.artistName,
+              avatar: firstWork.artistAvatar,
+              coverImage: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5', // Дефолтное изображение
+              bio: `Художник ${firstWork.artistName}`,
+              artStyles: [],
+              skills: [],
+              location: 'Россия',
+              socialLinks: {},
+              isVerified: false,
+              followers: Math.floor(Math.random() * 1000) + 100,
+              following: Math.floor(Math.random() * 200) + 20,
+              createdAt: '2023-01-01'
+            };
+            setArtist(minimalArtist);
+          } else {
+            // Если совсем ничего не нашли, создаем заглушку художника
+            console.warn(`Художник с ID ${artistId} не найден`);
+            const fallbackArtist: User = {
+              id: 'unknown',
+              username: 'unknown_artist',
+              displayName: 'Неизвестный художник',
+              avatar: 'https://via.placeholder.com/150',
+              coverImage: 'https://via.placeholder.com/600x200',
+              bio: 'Информация о художнике отсутствует',
+              artStyles: [],
+              skills: [],
+              location: '',
+              socialLinks: {},
+              isVerified: false,
+              followers: 0,
+              following: 0,
+              createdAt: new Date().toISOString().split('T')[0]
+            };
+            setArtist(fallbackArtist);
+          }
+        }
+        
+        // Ищем работы художника сначала в локальных данных, потом в импортированных
+        const localArtworks = PROFILE_MOCK_ARTWORKS.filter(artwork => artwork.artistId === artistId);
+        const importedArtworks = MOCK_ARTWORKS.filter(artwork => artwork.artistId === artistId);
+        
+        // Объединяем найденные работы, убираем дубликаты по ID
+        const allArtworks = [...localArtworks];
+        importedArtworks.forEach(artwork => {
+          if (!allArtworks.some(a => a.id === artwork.id)) {
+            allArtworks.push(artwork);
+          }
+        });
+        
+        setArtworks(allArtworks);
+        
+        // Проверяем, подписан ли текущий пользователь на этого художника
+        if (user && artistId) {
+          const isUserFollowing = checkIsFollowing(String(artistId));
+          setIsFollowing(isUserFollowing);
+          
+          // Загружаем количество подписчиков и подписок
+          const followers = await getFollowersCount(String(artistId));
+          const following = await getFollowingCount(String(artistId));
+          
+          setFollowersCount(followers);
+          setFollowingCount(following);
+        }
+      } catch (error) {
+        console.error('Ошибка при загрузке данных художника:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadArtistData();
+  }, [artistId, user, checkIsFollowing, getFollowersCount, getFollowingCount]);
+  
+  const handleFollowToggle = async () => {
+    if (!user || !artistId) return;
     
     try {
-      // Находим художника по ID из параметров URL
-      const artistData = MOCK_ARTISTS.find(a => a.id === artistId);
-      
-      if (artistData) {
-        setArtist(artistData);
+      if (isFollowing) {
+        await unfollowUser(String(artistId));
+        setFollowersCount(prev => Math.max(0, prev - 1));
       } else {
-        // Если художник не найден в локальных данных, ищем в импортированных из artworks.ts
-        // Находим работы художника и берем данные из первой работы
-        const artistWorks = MOCK_ARTWORKS.filter(artwork => artwork.artistId === artistId);
-        if (artistWorks.length > 0) {
-          const firstWork = artistWorks[0];
-          // Создаем минимальный объект художника из данных его работы
-          const minimalArtist: User = {
-            id: firstWork.artistId,
-            username: firstWork.artistName.toLowerCase().replace(/\s+/g, '_'),
-            displayName: firstWork.artistName,
-            avatar: firstWork.artistAvatar,
-            coverImage: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5', // Дефолтное изображение
-            bio: `Художник ${firstWork.artistName}`,
-            artStyles: [],
-            skills: [],
-            location: 'Россия',
-            socialLinks: {},
-            isVerified: false,
-            followers: Math.floor(Math.random() * 1000) + 100,
-            following: Math.floor(Math.random() * 200) + 20,
-            createdAt: '2023-01-01'
-          };
-          setArtist(minimalArtist);
-        } else {
-          // Если совсем ничего не нашли, создаем заглушку художника
-          console.warn(`Художник с ID ${artistId} не найден`);
-          const fallbackArtist: User = {
-            id: 'unknown',
-            username: 'unknown_artist',
-            displayName: 'Неизвестный художник',
-            avatar: 'https://via.placeholder.com/150',
-            coverImage: 'https://via.placeholder.com/600x200',
-            bio: 'Информация о художнике отсутствует',
-            artStyles: [],
-            skills: [],
-            location: '',
-            socialLinks: {},
-            isVerified: false,
-            followers: 0,
-            following: 0,
-            createdAt: new Date().toISOString().split('T')[0]
-          };
-          setArtist(fallbackArtist);
-        }
+        await followUser(String(artistId));
+        setFollowersCount(prev => prev + 1);
       }
       
-      // Ищем работы художника сначала в локальных данных, потом в импортированных
-      const localArtworks = PROFILE_MOCK_ARTWORKS.filter(artwork => artwork.artistId === artistId);
-      const importedArtworks = MOCK_ARTWORKS.filter(artwork => artwork.artistId === artistId);
-      
-      // Объединяем найденные работы, убираем дубликаты по ID
-      const allArtworks = [...localArtworks];
-      importedArtworks.forEach(artwork => {
-        if (!allArtworks.some(a => a.id === artwork.id)) {
-          allArtworks.push(artwork);
-        }
-      });
-      
-      setArtworks(allArtworks);
+      setIsFollowing(!isFollowing);
     } catch (error) {
-      console.error('Ошибка при загрузке данных художника:', error);
-    } finally {
-      setIsLoading(false);
+      console.error('Ошибка при изменении подписки:', error);
     }
-  }, [artistId]);
-  
-  const handleFollowToggle = () => {
-    setIsFollowing(!isFollowing);
   };
 
   const handleMessage = () => {
@@ -524,91 +559,20 @@ export default function ArtistProfileScreen() {
     </ThemedView>
   );
 
-  const renderHeader = () => (
-    <>
-      {/* Обложка профиля */}
-      <View style={styles.coverContainer}>
-        {artist?.coverImage ? (
-          <Image source={{ uri: artist.coverImage }} style={styles.coverImage} />
-        ) : (
-          <View style={styles.placeholderCover} />
-        )}
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <FontAwesome name="arrow-left" size={20} color="#fff" />
-        </TouchableOpacity>
-      </View>
-      
-      {/* Информация профиля */}
-      <View style={styles.profileHeader}>
-        <View style={styles.avatarContainer}>
-          <Image source={{ uri: artist?.avatar }} style={styles.avatar} />
-          {artist?.isVerified && (
-            <View style={styles.verifiedBadge}>
-              <FontAwesome name="check" size={12} color="#fff" />
-            </View>
-          )}
-        </View>
-        
-        <ThemedText style={styles.displayName}>{artist?.displayName}</ThemedText>
-        <ThemedText style={styles.username}>@{artist?.username}</ThemedText>
-        
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <ThemedText style={styles.statValue}>{artworks.length}</ThemedText>
-            <ThemedText style={styles.statLabel}>Работ</ThemedText>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <ThemedText style={styles.statValue}>{artist?.followers}</ThemedText>
-            <ThemedText style={styles.statLabel}>Подписчиков</ThemedText>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <ThemedText style={styles.statValue}>{artist?.following}</ThemedText>
-            <ThemedText style={styles.statLabel}>Подписок</ThemedText>
-          </View>
-        </View>
-        
-        <TouchableOpacity 
-          style={[styles.followButton, isFollowing && styles.followingButton]}
-          onPress={handleFollowToggle}
-        >
-          <ThemedText style={[styles.followButtonText, isFollowing && styles.followingButtonText]}>
-            {isFollowing ? 'Отписаться' : 'Подписаться'}
-          </ThemedText>
-        </TouchableOpacity>
-        
-        {/* Табы для навигации */}
-        <View style={styles.tabsContainer}>
-          <TouchableOpacity 
-            style={[styles.tab, activeTab === 'portfolio' && styles.activeTab]}
-            onPress={() => setActiveTab('portfolio')}
-          >
-            <ThemedText style={[styles.tabText, activeTab === 'portfolio' && styles.activeTabText]}>
-              Портфолио
-            </ThemedText>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.tab, activeTab === 'about' && styles.activeTab]}
-            onPress={() => setActiveTab('about')}
-          >
-            <ThemedText style={[styles.tabText, activeTab === 'about' && styles.activeTabText]}>
-              О художнике
-            </ThemedText>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.tab, activeTab === 'collections' && styles.activeTab]}
-            onPress={() => setActiveTab('collections')}
-          >
-            <ThemedText style={[styles.tabText, activeTab === 'collections' && styles.activeTabText]}>
-              Коллекции
-            </ThemedText>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </>
+  const renderHeaderContent = () => (
+    artist ? (
+      <ProfileHeader
+        user={artist}
+        isCurrentUser={false}
+        isFollowing={isFollowing}
+        onFollow={handleFollowToggle}
+        onMessage={handleMessage}
+        followersCount={followersCount}
+        followingCount={followingCount}
+      />
+    ) : null
   );
-  
+
   return (
     <ThemedView style={styles.container}>
       {isLoading ? (
@@ -618,75 +582,52 @@ export default function ArtistProfileScreen() {
         </View>
       ) : (
         <>
-          <ThemedView style={styles.tabContainer}>
-            <TouchableOpacity 
-              style={[styles.tab, activeTab === 'portfolio' && styles.activeTab]}
-              onPress={() => setActiveTab('portfolio')}
-            >
-              <FontAwesome name="th" size={18} color={activeTab === 'portfolio' ? "#0a7ea4" : "#888"} />
-              <ThemedText style={activeTab === 'portfolio' ? styles.activeTabText : styles.tabText}>
-                Работы
-              </ThemedText>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.tab, activeTab === 'about' && styles.activeTab]}
-              onPress={() => setActiveTab('about')}
-            >
-              <FontAwesome name="user" size={18} color={activeTab === 'about' ? "#0a7ea4" : "#888"} />
-              <ThemedText style={activeTab === 'about' ? styles.activeTabText : styles.tabText}>
-                О художнике
-              </ThemedText>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.tab, activeTab === 'collections' && styles.activeTab]}
-              onPress={() => setActiveTab('collections')}
-            >
-              <FontAwesome name="folder" size={18} color={activeTab === 'collections' ? "#0a7ea4" : "#888"} />
-              <ThemedText style={activeTab === 'collections' ? styles.activeTabText : styles.tabText}>
-                Коллекции
-              </ThemedText>
-            </TouchableOpacity>
-          </ThemedView>
-          
-          {activeTab === 'portfolio' ? (
-            <View style={styles.contentContainer}>
-              {artworks.length === 0 ? (
-                <ThemedView style={styles.emptyState}>
-                  <ThemedText style={styles.emptyStateText}>У художника пока нет работ</ThemedText>
-                </ThemedView>
-              ) : (
-                <FlatList
-                  data={artworks}
-                  renderItem={renderArtworkItem}
-                  numColumns={2}
-                  keyExtractor={(item) => `profile-artwork-${item.id}`}
-                  columnWrapperStyle={styles.columnWrapper}
-                  contentContainerStyle={styles.artworksContainer}
-                  showsVerticalScrollIndicator={false}
-                  ListHeaderComponent={renderHeader}
-                />
-              )}
+          <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+            {renderHeaderContent()}
+            
+            {/* Вкладки */}
+            <View style={styles.tabsContainer}>
+              <TouchableOpacity
+                style={[styles.tab, activeTab === 'portfolio' && styles.activeTab]}
+                onPress={() => setActiveTab('portfolio')}
+              >
+                <ThemedText style={[styles.tabText, activeTab === 'portfolio' && styles.activeTabText]}>
+                  Портфолио
+                </ThemedText>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.tab, activeTab === 'about' && styles.activeTab]}
+                onPress={() => setActiveTab('about')}
+              >
+                <ThemedText style={[styles.tabText, activeTab === 'about' && styles.activeTabText]}>
+                  О художнике
+                </ThemedText>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.tab, activeTab === 'collections' && styles.activeTab]}
+                onPress={() => setActiveTab('collections')}
+              >
+                <ThemedText style={[styles.tabText, activeTab === 'collections' && styles.activeTabText]}>
+                  Коллекции
+                </ThemedText>
+              </TouchableOpacity>
             </View>
-          ) : (
-            <ScrollView 
-              style={styles.contentContainer}
-              showsVerticalScrollIndicator={false}
-            >
-              {renderHeader()}
-              <View style={styles.tabContent}>
-                {activeTab === 'about' && renderAboutTab()}
-                {activeTab === 'collections' && renderCollectionsTab()}
-              </View>
-            </ScrollView>
-          )}
-
-          {artist && (
-            <ContactArtistModal
-              visible={isContactModalVisible}
-              artist={artist}
-              onClose={() => setIsContactModalVisible(false)}
-            />
-          )}
+            
+            {/* Контент вкладки */}
+            <View style={styles.tabContent}>
+              {activeTab === 'portfolio' && renderPortfolioTab()}
+              {activeTab === 'about' && renderAboutTab()}
+              {activeTab === 'collections' && renderCollectionsTab()}
+            </View>
+          </ScrollView>
+          
+          <ContactArtistModal
+            visible={isContactModalVisible}
+            artist={artist}
+            onClose={() => setIsContactModalVisible(false)}
+          />
         </>
       )}
     </ThemedView>
@@ -814,14 +755,15 @@ const styles = StyleSheet.create({
   },
   tabsContainer: {
     flexDirection: 'row',
-    width: '100%',
+    paddingHorizontal: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: '#ddd',
+    backgroundColor: '#fff',
   },
   tab: {
     flex: 1,
-    alignItems: 'center',
     paddingVertical: 12,
+    alignItems: 'center',
   },
   activeTab: {
     borderBottomWidth: 2,
@@ -832,11 +774,11 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   activeTabText: {
-    color: '#0a7ea4',
     fontWeight: 'bold',
+    color: '#0a7ea4',
   },
   tabContent: {
-    paddingTop: 16,
+    flex: 1,
   },
   portfolioContainer: {
     padding: 16,
@@ -918,25 +860,6 @@ const styles = StyleSheet.create({
     color: '#888',
     textAlign: 'center',
   },
-  tabContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    paddingVertical: 12,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: '#888',
-    textAlign: 'center',
-  },
   columnWrapper: {
     justifyContent: 'space-between',
   },
@@ -948,5 +871,18 @@ const styles = StyleSheet.create({
     padding: 4,
     width: '48%',
     marginBottom: 12,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
   },
 }); 

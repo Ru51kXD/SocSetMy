@@ -101,7 +101,9 @@ export function ContactArtistModal({ visible, artist, artwork, onClose }: Contac
                 <View style={styles.avatarWrapper}>
                   <FontAwesome name="user-circle" size={24} color="#0a7ea4" />
                 </View>
-                <ThemedText style={styles.artistName}>{artist.displayName}</ThemedText>
+                <ThemedText style={styles.artistName}>
+                  {artist?.displayName || 'Художник'}
+                </ThemedText>
               </View>
             </View>
             

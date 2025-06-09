@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
-import { StyleSheet, View, TouchableOpacity, ScrollView, Text, Alert, ActivityIndicator, FlatList, Dimensions } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, ScrollView, Text, Alert, ActivityIndicator, FlatList, Dimensions, Image } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -13,6 +13,7 @@ import { useArtworks } from '@/app/context/ArtworkContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { UploadArtworkModal } from '@/app/components/artwork/UploadArtworkModal';
 import { useUserPreferences } from '@/app/context/UserPreferencesContext';
+import { useFollow } from '@/app/context/FollowContext';
 import { useRouter } from 'expo-router';
 
 // Константа для расчета размеров сетки
@@ -154,6 +155,7 @@ export default function ProfileScreen() {
   const { user, logout } = useAuth(); // Получаем пользователя и функцию выхода из AuthContext
   const { userArtworks, isLoading: isLoadingArtworks } = useArtworks(); // Получаем работы пользователя из ArtworkContext
   const { likedArtworks, savedArtworks, isLoading: isLoadingPreferences } = useUserPreferences(); // Получаем лайкнутые и сохраненные работы
+  const { followers, following, getFollowersCount, getFollowingCount, isLoading: isLoadingFollow } = useFollow(); // Получаем данные о подписках
   const router = useRouter();
   
   const [activeTab, setActiveTab] = useState<TabType>('works');
@@ -161,6 +163,8 @@ export default function ProfileScreen() {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isUploadModalVisible, setIsUploadModalVisible] = useState(false);
   const [columnWidth, setColumnWidth] = useState(0);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
   const containerRef = useRef<View>(null);
   
   // Определяем, является ли пользователь новым (только что зарегистрированным)
@@ -172,6 +176,25 @@ export default function ProfileScreen() {
       setCurrentUser(user);
     }
   }, [user]);
+
+  // Загружаем количество подписчиков и подписок при инициализации
+  useEffect(() => {
+    const loadFollowCounts = async () => {
+      if (user) {
+        try {
+          const followers = await getFollowersCount(user.id);
+          const following = await getFollowingCount(user.id);
+          
+          setFollowersCount(followers);
+          setFollowingCount(following);
+        } catch (error) {
+          console.error('Ошибка при загрузке данных о подписках:', error);
+        }
+      }
+    };
+    
+    loadFollowCounts();
+  }, [user, getFollowersCount, getFollowingCount, followers.length, following.length]);
 
   // Вычисляем ширину колонки после рендеринга
   useLayoutEffect(() => {
@@ -298,7 +321,7 @@ export default function ProfileScreen() {
   };
 
   // Если данные загружаются, показываем индикатор загрузки
-  if (isLoadingArtworks || isLoadingPreferences) {
+  if (isLoadingArtworks || isLoadingPreferences || isLoadingFollow) {
     return (
       <View style={[styles.container, styles.loadingContainer]}>
         <ActivityIndicator size="large" color="#0a7ea4" />
@@ -310,17 +333,15 @@ export default function ProfileScreen() {
   return (
     <ThemedView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <ProfileHeader 
-          user={currentUser}
-          isCurrentUser={true}
-          onEditProfile={handleEditProfile}
-        />
-        
-        {/* Кнопка выхода из аккаунта */}
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <FontAwesome name="sign-out" size={18} color="#e74c3c" style={styles.logoutIcon} />
-          <ThemedText style={styles.logoutText}>Выйти из аккаунта</ThemedText>
-        </TouchableOpacity>
+        {currentUser && (
+          <ProfileHeader 
+            user={currentUser}
+            isCurrentUser={true}
+            onEditProfile={handleEditProfile}
+            followersCount={followersCount}
+            followingCount={followingCount}
+          />
+        )}
         
         {/* Вкладки профиля */}
         <View style={styles.tabsContainer}>
@@ -412,18 +433,15 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       )}
       
-      {/* Модальное окно редактирования профиля */}
-      {isEditModalVisible && currentUser && (
-        <EditProfileModal
-          visible={isEditModalVisible}
-          user={currentUser}
-          onSave={handleSaveProfile}
-          onClose={() => setIsEditModalVisible(false)}
-        />
-      )}
+      {/* Модальные окна */}
+      <EditProfileModal 
+        visible={isEditModalVisible} 
+        user={currentUser} 
+        onClose={() => setIsEditModalVisible(false)} 
+        onSave={handleSaveProfile} 
+      />
       
-      {/* Модальное окно загрузки работы */}
-      <UploadArtworkModal 
+      <UploadArtworkModal
         visible={isUploadModalVisible}
         onClose={() => setIsUploadModalVisible(false)}
         onSuccess={handleUploadSuccess}
@@ -442,8 +460,8 @@ const styles = StyleSheet.create({
   },
   tabsContainer: {
     flexDirection: 'row',
-    marginTop: 20,
     marginBottom: 10,
+    paddingHorizontal: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#ddd',
   },
@@ -458,15 +476,15 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: 14,
-    fontWeight: '500',
   },
   activeTabText: {
+    fontWeight: 'bold',
     color: '#0a7ea4',
-    fontWeight: '600',
   },
   contentContainer: {
-    paddingVertical: 16,
     flex: 1,
+    paddingHorizontal: 15,
+    paddingBottom: 20,
   },
   emptyContainer: {
     padding: 30,
@@ -520,21 +538,18 @@ const styles = StyleSheet.create({
   },
   floatingButton: {
     position: 'absolute',
-    right: 20,
     bottom: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    overflow: 'hidden',
+    right: 20,
+    elevation: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowRadius: 3.84,
   },
   floatingButtonGradient: {
-    width: '100%',
-    height: '100%',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -594,5 +609,72 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 2,
+  },
+  headerContainer: {
+    padding: 16,
+    backgroundColor: '#fff',
+  },
+  headerInfoContainer: {
+    flexDirection: 'column',
+  },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerButton: {
+    padding: 8,
+  },
+  welcomeText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  profileInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  avatarContainer: {
+    position: 'relative',
+  },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+  },
+  verifiedBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: '#4caf50',
+    borderRadius: 12,
+    padding: 2,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 16,
+  },
+  statItem: {
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  statLabel: {
+    fontSize: 14,
+    color: '#888',
+  },
+  statDivider: {
+    width: 1,
+    height: '100%',
+    backgroundColor: '#ddd',
+    marginHorizontal: 16,
   },
 });

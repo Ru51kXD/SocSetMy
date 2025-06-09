@@ -31,16 +31,16 @@ interface EditProfileModalProps {
 }
 
 export function EditProfileModal({ visible, user, onClose, onSave }: EditProfileModalProps) {
-  const [displayName, setDisplayName] = useState(user.displayName);
-  const [username, setUsername] = useState(user.username);
-  const [bio, setBio] = useState(user.bio || '');
-  const [location, setLocation] = useState(user.location || '');
-  const [websiteUrl, setWebsiteUrl] = useState(user.websiteUrl || '');
-  const [instagram, setInstagram] = useState(user.socialLinks?.instagram || '');
-  const [behance, setBehance] = useState(user.socialLinks?.behance || '');
-  const [artstation, setArtstation] = useState(user.socialLinks?.artstation || '');
+  const [displayName, setDisplayName] = useState(user?.displayName || '');
+  const [username, setUsername] = useState(user?.username || '');
+  const [bio, setBio] = useState(user?.bio || '');
+  const [location, setLocation] = useState(user?.location || '');
+  const [websiteUrl, setWebsiteUrl] = useState(user?.websiteUrl || '');
+  const [instagram, setInstagram] = useState(user?.socialLinks?.instagram || '');
+  const [behance, setBehance] = useState(user?.socialLinks?.behance || '');
+  const [artstation, setArtstation] = useState(user?.socialLinks?.artstation || '');
   const [selectedPhotoCategories, setSelectedPhotoCategories] = useState<string[]>(
-    user.photoCategories || []
+    user?.photoCategories || []
   );
 
   const togglePhotoCategory = (category: string) => {
@@ -96,17 +96,21 @@ export function EditProfileModal({ visible, user, onClose, onSave }: EditProfile
         <ScrollView style={styles.content}>
           <View style={styles.imageSection}>
             <View style={styles.coverImageContainer}>
-              <Image 
-                source={{ uri: user.coverImage || 'https://via.placeholder.com/600x200' }} 
-                style={styles.coverImage} 
-              />
+              {user && (
+                <Image 
+                  source={{ uri: user.coverImage || 'https://via.placeholder.com/600x200' }} 
+                  style={styles.coverImage} 
+                />
+              )}
               <TouchableOpacity style={styles.editCoverButton}>
                 <FontAwesome name="camera" size={16} color="#fff" />
               </TouchableOpacity>
             </View>
             
             <View style={styles.avatarContainer}>
-              <Image source={{ uri: user.avatar }} style={styles.avatar} />
+              {user && (
+                <Image source={{ uri: user.avatar || 'https://via.placeholder.com/150' }} style={styles.avatar} />
+              )}
               <TouchableOpacity style={styles.editAvatarButton}>
                 <FontAwesome name="camera" size={16} color="#fff" />
               </TouchableOpacity>
