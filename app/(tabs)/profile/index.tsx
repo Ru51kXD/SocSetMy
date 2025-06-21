@@ -338,6 +338,7 @@ export default function ProfileScreen() {
             user={currentUser}
             isCurrentUser={true}
             onEditProfile={handleEditProfile}
+            onLogout={handleLogout}
             followersCount={followersCount}
             followingCount={followingCount}
           />

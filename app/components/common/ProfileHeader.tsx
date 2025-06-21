@@ -13,6 +13,7 @@ interface ProfileHeaderProps {
   onFollow?: () => void;
   onMessage?: () => void;
   onEditProfile?: () => void;
+  onLogout?: () => void;
   followersCount?: number;
   followingCount?: number;
 }
@@ -26,6 +27,7 @@ export function ProfileHeader({
   onFollow,
   onMessage,
   onEditProfile,
+  onLogout,
   followersCount,
   followingCount
 }: ProfileHeaderProps) {
@@ -141,9 +143,16 @@ export function ProfileHeader({
         )}
         
         {isCurrentUser ? (
-          <TouchableOpacity style={styles.editButton} onPress={onEditProfile}>
-            <ThemedText style={styles.editButtonText}>Редактировать профиль</ThemedText>
-          </TouchableOpacity>
+          <View style={styles.currentUserActions}>
+            <TouchableOpacity style={styles.editButton} onPress={onEditProfile}>
+              <ThemedText style={styles.editButtonText}>Редактировать профиль</ThemedText>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
+              <FontAwesome name="sign-out" size={16} color="#e74c3c" />
+              <ThemedText style={styles.logoutText}>Выйти</ThemedText>
+            </TouchableOpacity>
+          </View>
         ) : (
           <View style={styles.actionButtons}>
             <TouchableOpacity 
@@ -399,5 +408,25 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: 12,
     color: '#555',
+  },
+  currentUserActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#e74c3c',
+    borderRadius: 20,
+    marginLeft: 10,
+  },
+  logoutText: {
+    color: '#e74c3c',
+    fontWeight: '500',
+    marginLeft: 8,
   },
 }); 
